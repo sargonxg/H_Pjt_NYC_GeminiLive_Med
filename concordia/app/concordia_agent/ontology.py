@@ -7,6 +7,7 @@ derived from UN Security Council mediation practice.
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from enum import StrEnum
 from typing import Optional
@@ -286,6 +287,202 @@ class ConflictGraph(BaseModel):
             "ready": score >= 75,
         }
 
+    def per_party_health_check(self, party_id: str) -> dict:
+        """Score completeness for a single party's contributions.
+
+        Filters all nodes by contributed_by == party_id, then checks
+        whether this party has provided sufficient data.
+        """
+        party_actors = [a for a in self.actors if a.contributed_by == party_id]
+        party_claims = [c for c in self.claims if c.contributed_by == party_id]
+        party_interests = [i for i in self.interests if i.contributed_by == party_id]
+        party_constraints = [c for c in self.constraints if c.contributed_by == party_id]
+        party_leverages = [l for l in self.leverages if l.contributed_by == party_id]
+        party_events = [e for e in self.events if e.contributed_by == party_id]
+        party_narratives = [n for n in self.narratives if n.contributed_by == party_id]
+
+        actor_ids = {a.id for a in party_actors}
+        actors_with_claims = {c.source_actor_id for c in party_claims} & actor_ids
+        actors_with_interests = {i.actor_id for i in party_interests} & actor_ids
+
+        checks = {
+            "has_actors": len(party_actors) >= 1,
+            "has_claims": len(party_claims) >= 1,
+            "has_interests": len(party_interests) >= 1,
+            "has_constraints": len(party_constraints) >= 1,
+            "has_events": len(party_events) >= 1,
+            "has_narratives": len(party_narratives) >= 1,
+        }
+
+        passed = sum(checks.values())
+        total = len(checks)
+        score = int((passed / total) * 100) if total else 0
+
+        gaps: list[str] = []
+        if not checks["has_actors"]:
+            gaps.append("No actors identified from this party's input.")
+        if not checks["has_claims"]:
+            gaps.append("No claims captured — what does this party want or allege?")
+        if not checks["has_interests"]:
+            gaps.append("No underlying interests found — what really matters to them?")
+        if not checks["has_constraints"]:
+            gaps.append("No constraints mentioned — any limits or boundaries?")
+        if not checks["has_events"]:
+            gaps.append("No timeline events — what happened?")
+        if not checks["has_narratives"]:
+            gaps.append("No narrative captured — how do they see the situation?")
+
+        return {
+            "party_id": party_id,
+            "score": score,
+            "checks": checks,
+            "gaps": gaps,
+            "counts": {
+                "actors": len(party_actors),
+                "claims": len(party_claims),
+                "interests": len(party_interests),
+                "constraints": len(party_constraints),
+                "leverages": len(party_leverages),
+                "events": len(party_events),
+                "narratives": len(party_narratives),
+            },
+        }
+
+    def escalation_assessment(self) -> EscalationLevel:
+        """Compute and update escalation_level based on graph data.
+
+        Uses Glasl-inspired indicators:
+        - Accusation/grievance density
+        - Broken commitments
+        - Leverage asymmetry
+        - Adversarial narrative framing
+        """
+        score = 0
+
+        # Accusation and grievance density
+        adversarial_claims = sum(
+            1 for c in self.claims
+            if c.claim_type in (ClaimType.ACCUSATION, ClaimType.GRIEVANCE)
+        )
+        proposal_claims = sum(
+            1 for c in self.claims if c.claim_type == ClaimType.PROPOSAL
+        )
+        if adversarial_claims > 0:
+            ratio = adversarial_claims / max(len(self.claims), 1)
+            if ratio > 0.7:
+                score += 3
+            elif ratio > 0.4:
+                score += 2
+            else:
+                score += 1
+
+        # Broken commitments
+        broken = sum(1 for c in self.commitments if c.status == CommitmentStatus.BROKEN)
+        if broken >= 3:
+            score += 3
+        elif broken >= 1:
+            score += 2
+
+        # Leverage asymmetry
+        leverage_by_holder: dict[str, int] = {}
+        for lev in self.leverages:
+            leverage_by_holder.setdefault(lev.held_by_actor_id, 0)
+            leverage_by_holder[lev.held_by_actor_id] = (
+                leverage_by_holder[lev.held_by_actor_id] + lev.strength
+            )
+        if leverage_by_holder:
+            strengths = list(leverage_by_holder.values())
+            if len(strengths) >= 2:
+                asymmetry = max(strengths) / max(min(strengths), 1)
+                if asymmetry > 3:
+                    score += 2
+                elif asymmetry > 1.5:
+                    score += 1
+
+        # Adversarial narrative framing
+        adversarial_frames = {"victim", "betrayal", "villain", "enemy", "aggressor", "threat", "war"}
+        frame_hits = 0
+        for n in self.narratives:
+            for f in n.frames:
+                if f.lower() in adversarial_frames:
+                    frame_hits += 1
+        if frame_hits >= 4:
+            score += 3
+        elif frame_hits >= 2:
+            score += 2
+        elif frame_hits >= 1:
+            score += 1
+
+        # Map score to level
+        if score >= 9:
+            level = EscalationLevel.DESTRUCTIVE
+        elif score >= 7:
+            level = EscalationLevel.CRISIS
+        elif score >= 4:
+            level = EscalationLevel.ESCALATING
+        elif score >= 2:
+            level = EscalationLevel.EMERGING
+        else:
+            level = EscalationLevel.LATENT
+
+        self.escalation_level = level
+        return level
+
+    def graph_summary_for_agent(self) -> str:
+        """Return a concise text summary suitable for injecting into agent context."""
+        lines = []
+
+        if self.case_title:
+            lines.append(f"Case: {self.case_title}")
+        if self.case_summary:
+            lines.append(f"Summary: {self.case_summary}")
+        lines.append(f"Escalation: {self.escalation_level}")
+        lines.append(f"Phase: {self.phase}")
+        lines.append("")
+
+        # Actors
+        if self.actors:
+            lines.append("ACTORS:")
+            for a in self.actors:
+                lines.append(f"  - {a.name} ({a.actor_type}) [{a.id}]: {a.role_in_conflict}")
+            lines.append("")
+
+        # Claims per actor
+        if self.claims:
+            lines.append("KEY CLAIMS:")
+            claims_by_actor: dict[str, list[str]] = {}
+            for c in self.claims:
+                actor_name = next(
+                    (a.name for a in self.actors if a.id == c.source_actor_id),
+                    c.source_actor_id,
+                )
+                claims_by_actor.setdefault(actor_name, []).append(
+                    f"{c.claim_type}: {c.content[:80]}"
+                )
+            for actor_name, claims in claims_by_actor.items():
+                lines.append(f"  {actor_name}:")
+                for cl in claims[:3]:  # Limit to 3 per actor for brevity
+                    lines.append(f"    - {cl}")
+            lines.append("")
+
+        # Shared interests
+        common = self.find_common_ground()
+        if common["shared_interests"]:
+            lines.append("SHARED INTERESTS:")
+            for itype, entries in common["shared_interests"].items():
+                actors = ", ".join(e["actor"] for e in entries)
+                lines.append(f"  - {itype}: shared by {actors}")
+            lines.append("")
+
+        # Gaps from health check
+        health = self.health_check()
+        if health["gaps"]:
+            lines.append(f"GAPS (health score: {health['score']}%):")
+            for gap in health["gaps"][:5]:
+                lines.append(f"  - {gap}")
+
+        return "\n".join(lines)
+
     def find_common_ground(self) -> dict:
         """Analyze shared interests, broken commitments, and leverage balance."""
         # Shared interests: group by interest_type, find types held by multiple actors
@@ -341,3 +538,6 @@ class ConflictGraph(BaseModel):
 
 graph = ConflictGraph()
 active_party: str = "default"
+
+# Thread safety lock for graph mutations
+graph_lock = asyncio.Lock()
