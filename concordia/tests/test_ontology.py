@@ -95,8 +95,8 @@ class TestHealthCheck:
         assert h["checks"]["has_events"]
         assert h["checks"]["has_narratives"]
 
-    def test_boundary_75_percent(self, empty_graph):
-        # 6/8 checks = 75%
+    def test_boundary_score(self, empty_graph):
+        # 5/9 checks = 55%
         g = empty_graph
         a1 = Actor(name="A", actor_type=ActorType.INDIVIDUAL)
         a2 = Actor(name="B", actor_type=ActorType.INDIVIDUAL)
@@ -114,9 +114,9 @@ class TestHealthCheck:
         g.leverages.append(Leverage(leverage_type=LeverageType.COERCIVE,
                                     description="l", held_by_actor_id=a1.id))
         h = g.health_check()
-        # 5/8 checks pass (actors, claims, interests, constraints, leverage)
-        # Missing: events, narratives, case_metadata → 5/8 = 62%
-        assert h["score"] == 62
+        # 5/9 checks pass (actors, claims, interests, constraints, leverage)
+        # Missing: events, narratives, case_metadata, psych_profiles → 5/9 = 55%
+        assert h["score"] == 55
 
 
 class TestPerPartyHealthCheck:

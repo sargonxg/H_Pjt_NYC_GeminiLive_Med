@@ -233,7 +233,7 @@ async def get_health():
         "active_cases": len(case_manager.active_cases),
         "startup_errors": _adk_errors,
         "python_version": sys.version,
-        "model": os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview"),
+        "model": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001"),
     }
 
 
@@ -245,7 +245,7 @@ async def get_diagnostics():
         "python_version": sys.version,
         "environment": {
             "PORT": os.getenv("PORT", "8080"),
-            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview"),
+            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001"),
             "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
             "GOOGLE_API_KEY": "SET" if os.getenv("GOOGLE_API_KEY") else "MISSING",
             "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*"),
@@ -657,7 +657,7 @@ def _build_run_config():
     from google.adk.agents.run_config import RunConfig, StreamingMode
     from google.genai import types
 
-    model_name = os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview")
+    model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001")
     if "native-audio" in model_name:
         return RunConfig(
             response_modalities=["AUDIO"],
@@ -810,7 +810,7 @@ async def _run_bidi_session(
                 except Exception:
                     pass
             elif "not found for api version" in error_msg or "not supported for bidigeneratecontent" in error_msg or "listmodels" in error_msg:
-                model_name = os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview")
+                model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001")
                 try:
                     await websocket.send_json({
                         "type": "error",
