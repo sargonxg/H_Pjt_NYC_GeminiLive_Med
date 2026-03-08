@@ -4,6 +4,12 @@
 
 Built for the NYC Build W/ AI Hackathon (Google Cloud Labs x Columbia Business School, March 2026).
 
+**Repository:** https://github.com/sargonxg/H_Pjt_NYC_GeminiLive_Med
+
+## What It Does
+
+Parties to a dispute talk naturally — alone or together — while a conflict knowledge graph builds live on screen. CONCORDIA listens, extracts structural primitives (actors, claims, interests, leverage, narratives...), and visualizes them as a D3 force graph. When the picture is complete, the agent shifts from listener to bridge-builder, proposing concrete resolution paths grounded in the graph data.
+
 ## Architecture
 
 ```
@@ -15,6 +21,8 @@ Browser (WebSocket + Audio)
 │  - WebSocket bidi-stream │
 │  - LiveRequestQueue      │
 │  - run_live() + RunConfig│
+│  - REST: /api/graph,     │
+│    /api/health, /api/status
 └──────────┬───────────────┘
            │
            ▼
@@ -22,11 +30,9 @@ Browser (WebSocket + Audio)
 │  Google ADK Agent Hierarchy              │
 │                                          │
 │  concordia (root)                        │
-│    ├── listener_agent   [11 tools]       │
-│    │     └── verifier_agent [3 tools]    │
-│    │           └── resolver_agent [3]    │
-│    ├── verifier_agent                    │
-│    └── resolver_agent                    │
+│    └── listener_agent   [11 tools]       │
+│          └── verifier_agent [3 tools]    │
+│                └── resolver_agent [3]    │
 │                                          │
 │  Tools mutate ──► ConflictGraph (8 types)│
 └──────────────────────────────────────────┘
@@ -61,6 +67,8 @@ cd app
 uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
+Then open http://localhost:8080 — you'll see the full UI with chat, live D3 graph, and stats panel.
+
 ## Project Structure
 
 ```
@@ -74,7 +82,7 @@ concordia/
 │   │   ├── tools.py               # 14 tools the agent calls
 │   │   └── agent.py               # 3 ADK agents
 │   └── static/
-│       └── index.html             # Frontend UI (D3 graph + chat + audio)
+│       └── index.html             # Frontend (D3 graph + chat + audio)
 ├── requirements.txt
 ├── Dockerfile
 ├── .gitignore
@@ -89,7 +97,7 @@ concordia/
 - **`run_live()`** — streams agent responses back through the WebSocket
 - **`RunConfig`** — configures the model, tools, and streaming behavior
 
-Parties talk naturally while the **Listener agent** silently extracts conflict primitives into a knowledge graph. When the graph is complete enough (health score >= 75%), the system transitions through **Verifier** to **Resolver**, which proposes concrete resolution paths.
+The key innovation: after **every tool call**, the server pushes the updated graph to the frontend via WebSocket `graph_update` messages. This means the D3 visualization updates live — nodes appear with smooth animations as the agent silently extracts conflict primitives during conversation.
 
 ## The 3 Agents
 
@@ -118,11 +126,22 @@ Derived from UN Security Council mediation practice:
 
 ```bash
 gcloud run deploy concordia \
-  --source concordia/ \
+  --source . \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars GOOGLE_API_KEY=your_key
+  --set-env-vars GOOGLE_API_KEY=your_key,CONCORDIA_MODEL=gemini-2.0-flash
 ```
+
+WebSocket connections have a 60-minute timeout on Cloud Run. The `session_resumption` in RunConfig handles reconnection automatically.
+
+## Tech Stack
+
+- **Google ADK** (Agent Development Kit) — agent orchestration
+- **Gemini Live API** — real-time voice/text AI
+- **FastAPI** — async WebSocket server
+- **D3.js** — force-directed graph visualization
+- **Pydantic** — conflict ontology data models
+- **Docker / Cloud Run** — deployment
 
 ## Team
 
