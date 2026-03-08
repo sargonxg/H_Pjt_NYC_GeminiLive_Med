@@ -1,0 +1,6 @@
+google-adk>=1.0.0
+google-genai
+pydantic>=2.0
+fastapi
+uvicorn[standard]
+python-dotenv
