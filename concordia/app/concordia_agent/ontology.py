@@ -246,6 +246,10 @@ class ConflictGraph(BaseModel):
         actors_with_interests = {i.actor_id for i in self.interests} & actor_ids
         actors_with_narratives = {n.held_by_actor_id for n in self.narratives} & actor_ids
 
+        # Check psychological profiles
+        psych_profiles = getattr(self, '_psych_profiles', {})
+        actors_with_profiles = set(psych_profiles.keys()) & actor_ids
+
         checks = {
             "two_plus_actors": len(self.actors) >= 2,
             "all_actors_have_claims": actor_ids == actors_with_claims if actor_ids else False,
@@ -255,6 +259,7 @@ class ConflictGraph(BaseModel):
             "has_events": len(self.events) > 0,
             "has_narratives": len(self.narratives) > 0,
             "case_metadata_set": bool(self.case_title and self.case_summary),
+            "has_psychological_profiles": len(actors_with_profiles) >= min(len(actor_ids), 2) if actor_ids else False,
         }
 
         passed = sum(checks.values())
@@ -271,6 +276,8 @@ class ConflictGraph(BaseModel):
                 gaps.append(f"Actor '{actor.name}' has no interests — what do they really need?")
             if actor.id not in actors_with_narratives:
                 gaps.append(f"Actor '{actor.name}' has no narrative — how do they frame the situation?")
+            if actor.id not in actors_with_profiles:
+                gaps.append(f"Actor '{actor.name}' has no psychological profile — what drives them (money, recognition, fairness, security)?")
         if not checks["has_constraints"]:
             gaps.append("No constraints identified — are there legal, financial, or time limits?")
         if not checks["has_leverage"]:

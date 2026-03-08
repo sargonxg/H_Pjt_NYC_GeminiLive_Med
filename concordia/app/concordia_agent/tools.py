@@ -406,14 +406,258 @@ def analyze_common_ground() -> dict:
     return graph.find_common_ground()
 
 
+def add_psychological_profile(
+    actor_id: str,
+    primary_driver: str,
+    secondary_driver: str,
+    communication_style: str,
+    risk_tolerance: str,
+    emotional_state: str,
+    notes: str,
+) -> dict:
+    """Record psychological and motivational indicators for a party.
+    Call this when you detect what truly drives someone — is it money, recognition,
+    security, control, fairness, relationships, or autonomy?
+
+    This helps the mediator understand negotiation dynamics and craft solutions
+    that resonate with each party's core motivations.
+
+    Args:
+        actor_id: ID of the actor this profile describes.
+        primary_driver: Main motivation. One of: money, recognition, security, control, fairness, relationships, autonomy, legacy, reputation, principle.
+        secondary_driver: Secondary motivation (same options as primary_driver).
+        communication_style: One of: analytical, emotional, assertive, collaborative, avoidant.
+        risk_tolerance: One of: risk_averse, moderate, risk_seeking.
+        emotional_state: One of: calm, frustrated, angry, anxious, resigned, hopeful, defensive.
+        notes: Free-text observations about their psychology and what matters to them.
+
+    Returns:
+        dict confirming the profile was recorded.
+    """
+    graph = _graph()
+    profile = {
+        "actor_id": actor_id,
+        "primary_driver": primary_driver,
+        "secondary_driver": secondary_driver,
+        "communication_style": communication_style,
+        "risk_tolerance": risk_tolerance,
+        "emotional_state": emotional_state,
+        "notes": notes,
+        "contributed_by": _party(),
+    }
+    # Store profiles on the graph as a dynamic attribute
+    if not hasattr(graph, '_psych_profiles'):
+        object.__setattr__(graph, '_psych_profiles', {})
+    graph._psych_profiles[actor_id] = profile
+    return {"status": "recorded", "actor_id": actor_id, "primary_driver": primary_driver}
+
+
+def get_missing_ontology_items() -> dict:
+    """Analyze the conflict graph and return a structured list of what's missing,
+    organized by ontology category, with suggested questions to ask.
+
+    This tool helps the AI lead the conversation by identifying specific gaps
+    and providing ready-made questions to fill them.
+
+    Returns:
+        dict with missing items per category and suggested questions.
+    """
+    graph = _graph()
+    health = graph.health_check()
+    actor_ids = {a.id for a in graph.actors}
+    actors_with_claims = {c.source_actor_id for c in graph.claims} & actor_ids
+    actors_with_interests = {i.actor_id for i in graph.interests} & actor_ids
+    actors_with_narratives = {n.held_by_actor_id for n in graph.narratives} & actor_ids
+
+    missing = {
+        "actors_needing_claims": [],
+        "actors_needing_interests": [],
+        "actors_needing_narratives": [],
+        "missing_constraints": not graph.constraints,
+        "missing_leverage": not graph.leverages,
+        "missing_events": not graph.events,
+        "missing_case_info": not (graph.case_title and graph.case_summary),
+        "suggested_questions": [],
+    }
+
+    for actor in graph.actors:
+        if actor.id not in actors_with_claims:
+            missing["actors_needing_claims"].append({"id": actor.id, "name": actor.name})
+            missing["suggested_questions"].append(
+                f"What is {actor.name} asking for or claiming in this situation?"
+            )
+        if actor.id not in actors_with_interests:
+            missing["actors_needing_interests"].append({"id": actor.id, "name": actor.name})
+            missing["suggested_questions"].append(
+                f"What does {actor.name} really need deep down? What's driving them — is it about money, principle, security, recognition?"
+            )
+        if actor.id not in actors_with_narratives:
+            missing["actors_needing_narratives"].append({"id": actor.id, "name": actor.name})
+            missing["suggested_questions"].append(
+                f"How does {actor.name} see this situation? Do they feel like the victim, the wronged party, or something else?"
+            )
+
+    if not graph.constraints:
+        missing["suggested_questions"].append(
+            "Are there any deadlines, legal limits, financial caps, or other constraints shaping this situation?"
+        )
+    if not graph.leverages:
+        missing["suggested_questions"].append(
+            "Who has power or leverage here? Can either side force the other's hand somehow?"
+        )
+    if not graph.events:
+        missing["suggested_questions"].append(
+            "Walk me through what happened. What was the first thing that went wrong, and how did things develop from there?"
+        )
+    if not (graph.case_title and graph.case_summary):
+        missing["suggested_questions"].append(
+            "Let me make sure I understand the situation. Can you give me a one-sentence summary of what this conflict is about?"
+        )
+
+    # Psychological profiling gaps
+    psych_profiles = getattr(graph, '_psych_profiles', {})
+    for actor in graph.actors:
+        if actor.id not in psych_profiles:
+            missing["suggested_questions"].append(
+                f"What matters most to {actor.name} in resolving this — money? being heard? fairness? their reputation?"
+            )
+
+    missing["health_score"] = health["score"]
+    missing["ready"] = health["ready"]
+    missing["total_gaps"] = len(missing["suggested_questions"])
+
+    return missing
+
+
+def get_mediation_roadmap() -> dict:
+    """Generate a structured mediation roadmap based on current graph state.
+    Identifies available resolution paths, red flags, common ground,
+    and recommended next steps for both parties.
+
+    Returns:
+        dict with resolution paths, red flags, common ground, and recommendations.
+    """
+    graph = _graph()
+    common = graph.find_common_ground()
+    health = graph.health_check()
+    escalation = graph.escalation_assessment()
+    psych_profiles = getattr(graph, '_psych_profiles', {})
+
+    # Identify red flags
+    red_flags = []
+    broken_commitments = common.get("broken_commitments", [])
+    if broken_commitments:
+        red_flags.append(f"{len(broken_commitments)} broken commitment(s) — trust repair needed before agreements work.")
+    if escalation in (EscalationLevel.CRISIS, EscalationLevel.DESTRUCTIVE):
+        red_flags.append(f"Escalation level is {escalation} — de-escalation should be the first priority.")
+
+    # Check for coercive leverage
+    coercive = [l for l in graph.leverages if l.leverage_type == LeverageType.COERCIVE]
+    if coercive:
+        red_flags.append(f"{len(coercive)} coercive leverage point(s) detected — power imbalance may undermine fair negotiation.")
+
+    # Accusation-heavy claims
+    accusations = [c for c in graph.claims if c.claim_type == ClaimType.ACCUSATION]
+    if len(accusations) > len(graph.claims) * 0.5 and graph.claims:
+        red_flags.append("High accusation density — parties may be more focused on blame than resolution.")
+
+    # Resolution approach recommendations
+    resolution_approaches = []
+
+    if common.get("shared_interests"):
+        shared_types = list(common["shared_interests"].keys())
+        resolution_approaches.append({
+            "name": "Interest-Based Negotiation",
+            "description": f"Both parties share interests in: {', '.join(shared_types)}. Build agreement from shared ground outward.",
+            "suitability": "high",
+        })
+
+    if graph.constraints:
+        resolution_approaches.append({
+            "name": "Constraint-Bounded Resolution",
+            "description": "Use existing constraints (legal, financial, temporal) as guardrails to narrow the solution space.",
+            "suitability": "medium" if graph.constraints else "low",
+        })
+
+    proposals = [c for c in graph.claims if c.claim_type == ClaimType.PROPOSAL]
+    if proposals:
+        resolution_approaches.append({
+            "name": "Proposal Refinement",
+            "description": f"{len(proposals)} proposal(s) already on the table. Refine and negotiate from existing offers.",
+            "suitability": "high",
+        })
+
+    if broken_commitments:
+        resolution_approaches.append({
+            "name": "Trust Restoration Protocol",
+            "description": "Address broken commitments first. Acknowledge harm, establish accountability, then rebuild with small verifiable steps.",
+            "suitability": "high" if broken_commitments else "low",
+        })
+
+    # Always include a structured dialogue option
+    resolution_approaches.append({
+        "name": "Structured Dialogue",
+        "description": "Guided conversation: each party states their core need (2 min), then shared concerns are identified, then joint brainstorming.",
+        "suitability": "medium",
+    })
+
+    # Party-specific recommendations
+    party_recommendations = {}
+    for actor in graph.actors:
+        profile = psych_profiles.get(actor.id, {})
+        recs = []
+        driver = profile.get("primary_driver", "unknown")
+        if driver == "money":
+            recs.append("Frame solutions in financial terms. Quantify costs of continued conflict vs. settlement.")
+        elif driver == "recognition":
+            recs.append("Ensure they feel heard and acknowledged. Public validation of their concerns may be key.")
+        elif driver == "fairness":
+            recs.append("Appeal to process fairness. Transparent, rule-based approaches will resonate.")
+        elif driver == "security":
+            recs.append("Offer guarantees, documentation, and fallback protections. Reduce uncertainty.")
+        elif driver == "control":
+            recs.append("Give them choices and agency in the process. Avoid presenting ultimatums.")
+        elif driver == "relationships":
+            recs.append("Emphasize the relationship's future value. Explore collaborative frameworks.")
+        elif driver == "reputation":
+            recs.append("Frame resolution as reputation-enhancing. Show how agreement looks stronger than conflict.")
+        else:
+            recs.append("Explore what truly drives this party — their core motivation is not yet clear.")
+
+        emotional = profile.get("emotional_state", "unknown")
+        if emotional in ("angry", "frustrated", "defensive"):
+            recs.append(f"Party is currently {emotional} — allow venting time and validate feelings before problem-solving.")
+        elif emotional == "anxious":
+            recs.append("Party is anxious — provide clear process structure and timeline to reduce uncertainty.")
+
+        party_recommendations[actor.name] = recs
+
+    return {
+        "health_score": health["score"],
+        "escalation_level": str(escalation),
+        "red_flags": red_flags,
+        "common_ground": common.get("shared_interests", {}),
+        "resolution_approaches": resolution_approaches,
+        "party_recommendations": party_recommendations,
+        "next_steps": [
+            "Review red flags and address any power imbalances",
+            "Present shared interests to both parties as foundation for agreement",
+            "Guide parties through resolution approaches in order of suitability",
+            "Draft concrete agreement terms referencing specific interests and constraints",
+        ],
+    }
+
+
 # ── Tool lists for agent assignment ──────────────────────────────────────────
 
 LISTENER_TOOLS = [
     add_actor, add_claim, add_interest, add_constraint,
     add_leverage, add_commitment, add_event, add_narrative,
     add_edge, set_case_info, ingest_document,
+    add_psychological_profile, get_missing_ontology_items,
 ]
 
 ANALYZER_TOOLS = [
     get_graph, run_health_check, analyze_common_ground,
+    get_missing_ontology_items, get_mediation_roadmap,
 ]

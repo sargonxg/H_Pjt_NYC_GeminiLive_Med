@@ -1,4 +1,4 @@
-"""Tests for the 14 tool functions."""
+"""Tests for the tool functions."""
 
 import pytest
 import concordia_agent.ontology as ontology
@@ -7,6 +7,8 @@ from concordia_agent.tools import (
     add_leverage, add_commitment, add_event, add_narrative,
     add_edge, set_case_info, ingest_document,
     get_graph, run_health_check, analyze_common_ground,
+    add_psychological_profile, get_missing_ontology_items,
+    get_mediation_roadmap,
 )
 
 
@@ -148,6 +150,63 @@ class TestAnalysisTools:
         r = analyze_common_ground()
         assert ontology.graph.phase == "resolve"
         assert "shared_interests" in r
+
+
+class TestPsychologicalProfile:
+    def test_creates_profile(self):
+        add_actor("Alice", "individual", "A person", "complainant")
+        a_id = ontology.graph.actors[0].id
+        r = add_psychological_profile(
+            actor_id=a_id,
+            primary_driver="money",
+            secondary_driver="fairness",
+            communication_style="analytical",
+            risk_tolerance="moderate",
+            emotional_state="frustrated",
+            notes="Focused on financial recovery",
+        )
+        assert r["status"] == "recorded"
+        assert r["primary_driver"] == "money"
+        assert hasattr(ontology.graph, '_psych_profiles')
+        assert a_id in ontology.graph._psych_profiles
+
+
+class TestGetMissingOntologyItems:
+    def test_empty_graph_has_gaps(self):
+        r = get_missing_ontology_items()
+        assert r["total_gaps"] > 0
+        assert not r["ready"]
+
+    def test_populated_graph_suggests_questions(self):
+        add_actor("Alice", "individual", "A", "c")
+        add_actor("Bob", "individual", "B", "r")
+        r = get_missing_ontology_items()
+        assert len(r["suggested_questions"]) > 0
+        assert len(r["actors_needing_claims"]) == 2
+
+    def test_filled_graph_has_fewer_gaps(self, populated_graph):
+        ontology.graph = populated_graph
+        r = get_missing_ontology_items()
+        # Populated graph has most things filled
+        assert r["actors_needing_claims"] == []
+        assert r["actors_needing_interests"] == []
+
+
+class TestGetMediationRoadmap:
+    def test_empty_graph_roadmap(self):
+        r = get_mediation_roadmap()
+        assert "health_score" in r
+        assert "resolution_approaches" in r
+        assert len(r["resolution_approaches"]) >= 1  # At least structured dialogue
+
+    def test_populated_graph_roadmap(self, populated_graph):
+        ontology.graph = populated_graph
+        r = get_mediation_roadmap()
+        assert r["health_score"] > 0
+        assert len(r["resolution_approaches"]) >= 2
+        assert len(r["party_recommendations"]) >= 2
+        # Should have red flags for broken commitment
+        assert len(r["red_flags"]) >= 1
 
 
 class TestToolInvalidInputs:

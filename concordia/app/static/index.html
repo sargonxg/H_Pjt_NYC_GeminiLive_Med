@@ -1009,9 +1009,31 @@ function ChatPanel({ state, dispatch, wsRef }) {
           );
           if (m.type === "tool") {
             const c = COLORS[m.tool.replace("add_", "")] || "var(--accent-dim)";
+            const toolName = m.tool;
             const a = Object.entries(m.args || {}).filter(([k]) =>
-              ["name","content","description","case_title"].includes(k))
+              ["name","content","description","case_title","primary_driver","emotional_state","actor_id"].includes(k))
               .map(([,v]) => String(v).slice(0, 35)).join(", ");
+            // Special display for psychological profile
+            if (toolName === "add_psychological_profile") {
+              const drv = m.args?.primary_driver || "?";
+              const emo = m.args?.emotional_state || "?";
+              return (
+                <div key={i} style={{ fontSize: 10, color: "var(--purple)", padding: "3px 8px",
+                  background: "rgba(176,127,208,0.08)", borderRadius: 4, border: "1px solid rgba(176,127,208,0.15)" }}>
+                  <span style={{ fontWeight: 600 }}>&#x1F9E0; psych_profile</span>
+                  <span style={{ marginLeft: 6, color: "var(--text2)" }}>driver: {drv}, state: {emo}</span>
+                </div>
+              );
+            }
+            // Special display for mediation roadmap
+            if (toolName === "get_mediation_roadmap" || toolName === "get_missing_ontology_items") {
+              return (
+                <div key={i} style={{ fontSize: 10, color: "var(--accent)", padding: "3px 8px",
+                  background: "var(--accent-glow)", borderRadius: 4, border: "1px solid rgba(42,191,172,0.15)" }}>
+                  <span style={{ fontWeight: 600 }}>{toolName === "get_mediation_roadmap" ? "\u{1F5FA}\uFE0F roadmap" : "\u{1F50D} gap_analysis"}</span>
+                </div>
+              );
+            }
             return (
               <div key={i} style={{ fontSize: 10, color: "var(--muted)", padding: "1px 0",
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -1306,6 +1328,7 @@ function IntelPanel({ state, dispatch }) {
     .replace(/Actor '([^']+)' has no claims.*/,"Ask $1 what they want or allege")
     .replace(/Actor '([^']+)' has no interests.*/,"Explore $1's underlying needs")
     .replace(/Actor '([^']+)' has no narrative.*/,"How does $1 see the situation?")
+    .replace(/Actor '([^']+)' has no psychological profile.*/,"What drives $1 — money, fairness, recognition?")
     .replace(/No constraints identified.*/,"Any deadlines, legal limits, or budgets?")
     .replace(/No leverage mapped.*/,"Who holds power in this situation?")
     .replace(/No events recorded.*/,"What happened — key timeline events?")

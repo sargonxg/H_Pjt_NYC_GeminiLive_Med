@@ -93,6 +93,16 @@ def populated_graph():
     g.edges.append(Edge(source_id=alex.id, target_id=i1.id, relationship="HAS_INTEREST"))
     g.edges.append(Edge(source_id=maya.id, target_id=i3.id, relationship="HAS_INTEREST"))
 
+    # Add psychological profiles
+    object.__setattr__(g, '_psych_profiles', {
+        alex.id: {"actor_id": alex.id, "primary_driver": "recognition", "secondary_driver": "fairness",
+                  "communication_style": "analytical", "risk_tolerance": "moderate",
+                  "emotional_state": "frustrated", "notes": "Values professional respect"},
+        maya.id: {"actor_id": maya.id, "primary_driver": "control", "secondary_driver": "recognition",
+                  "communication_style": "assertive", "risk_tolerance": "moderate",
+                  "emotional_state": "defensive", "notes": "Values team efficiency"},
+    })
+
     return g
 
 
