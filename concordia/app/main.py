@@ -438,12 +438,6 @@ async def get_case(case_id: str):
 @app.post("/api/cases/{case_id}/upload")
 async def upload_document(case_id: str, req: UploadDocumentRequest):
     """Upload a text document for a specific party."""
-    if not _adk_available or ingest_text_for_party is None:
-        raise HTTPException(
-            status_code=503,
-            detail=f"AI agent unavailable — Google ADK not initialized. Errors: {_adk_errors}",
-        )
-
     case = await case_manager.get_case(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -451,6 +445,12 @@ async def upload_document(case_id: str, req: UploadDocumentRequest):
     party = case.parties.get(req.party_id)
     if not party:
         raise HTTPException(status_code=404, detail="Party not found in this case")
+
+    if not _adk_available or ingest_text_for_party is None:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI agent unavailable — Google ADK not initialized. Errors: {_adk_errors}",
+        )
 
     logger.info(
         f"Document upload | {log_ctx(case_id, req.party_id)} "
