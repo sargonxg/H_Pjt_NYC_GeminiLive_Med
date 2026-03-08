@@ -232,7 +232,7 @@ async def get_health():
         "active_cases": len(case_manager.active_cases),
         "startup_errors": _adk_errors,
         "python_version": sys.version,
-        "model": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash"),
+        "model": os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview"),
     }
 
 
@@ -244,7 +244,7 @@ async def get_diagnostics():
         "python_version": sys.version,
         "environment": {
             "PORT": os.getenv("PORT", "8080"),
-            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash"),
+            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview"),
             "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
             "GOOGLE_API_KEY": "SET" if os.getenv("GOOGLE_API_KEY") else "MISSING",
             "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*"),
@@ -656,7 +656,7 @@ def _build_run_config():
     from google.adk.agents.run_config import RunConfig, StreamingMode
     from google.genai import types
 
-    model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash")
+    model_name = os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview")
     if "native-audio" in model_name:
         return RunConfig(
             response_modalities=["AUDIO"],
@@ -805,6 +805,16 @@ async def _run_bidi_session(
                         "type": "error",
                         "content": "The AI service is temporarily at capacity. Please wait a moment and try again.",
                         "error_type": "quota_exhausted",
+                    })
+                except Exception:
+                    pass
+            elif "not found for api version" in error_msg or "not supported for bidigeneratecontent" in error_msg or "listmodels" in error_msg:
+                model_name = os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview")
+                try:
+                    await websocket.send_json({
+                        "type": "error",
+                        "content": f"Model '{model_name}' does not support live streaming (bidiGenerateContent). Check that the model name is correct and supports this API.",
+                        "error_type": "model_error",
                     })
                 except Exception:
                     pass

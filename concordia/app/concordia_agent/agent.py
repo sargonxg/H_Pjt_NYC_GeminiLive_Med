@@ -16,7 +16,7 @@ from google.adk.agents import Agent
 
 from .tools import LISTENER_TOOLS, ANALYZER_TOOLS
 
-MODEL = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash")
+MODEL = os.getenv("CONCORDIA_MODEL", "gemini-3-flash-preview")
 
 # ── Resolver Agent ───────────────────────────────────────────────────────────
 

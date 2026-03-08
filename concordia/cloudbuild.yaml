@@ -26,4 +26,4 @@ steps:
       - '--min-instances'
       - '1'
       - '--set-env-vars'
-      - 'CONCORDIA_MODEL=gemini-2.0-flash'
+      - 'CONCORDIA_MODEL=gemini-3-flash-preview'

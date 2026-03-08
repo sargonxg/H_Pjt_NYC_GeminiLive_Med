@@ -35,7 +35,7 @@ gcloud run deploy $SERVICE \
   --timeout 3600 \
   --session-affinity \
   --min-instances 1 \
-  --set-env-vars "CONCORDIA_MODEL=gemini-2.0-flash"
+  --set-env-vars "CONCORDIA_MODEL=gemini-3-flash-preview"
 
 URL=$(gcloud run services describe $SERVICE --region $REGION --format 'value(status.url)' 2>/dev/null)
 echo ""
