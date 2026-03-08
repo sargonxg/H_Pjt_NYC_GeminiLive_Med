@@ -9,6 +9,9 @@ from concordia_agent.tools import (
     get_graph, run_health_check, analyze_common_ground,
     add_psychological_profile, get_missing_ontology_items,
     get_mediation_roadmap,
+    assess_fisher_ury, assess_galtung_triangle, assess_glasl_escalation,
+    assess_deutsch_cooperation, assess_bush_folger_transformation,
+    generate_batna_analysis, assess_emotional_dynamics,
 )
 
 
@@ -207,6 +210,72 @@ class TestGetMediationRoadmap:
         assert len(r["party_recommendations"]) >= 2
         # Should have red flags for broken commitment
         assert len(r["red_flags"]) >= 1
+
+
+class TestFrameworkTools:
+    """Tests for the theoretical framework analysis tools."""
+
+    def test_fisher_ury_empty(self):
+        r = assess_fisher_ury()
+        assert "principles" in r
+        assert "overall_score" in r
+        assert "recommendations" in r
+
+    def test_fisher_ury_populated(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_fisher_ury()
+        assert r["overall_score"] > 0
+        assert len(r["recommendations"]) > 0
+
+    def test_galtung_triangle_empty(self):
+        r = assess_galtung_triangle()
+        assert "attitudes" in r
+        assert "behavior" in r
+        assert "contradictions" in r
+
+    def test_galtung_triangle_populated(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_galtung_triangle()
+        assert "attitudes" in r
+        assert "overall_assessment" in r
+
+    def test_glasl_escalation(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_glasl_escalation()
+        assert "estimated_stage" in r
+        assert "phase" in r
+        assert r["estimated_stage"] >= 1 and r["estimated_stage"] <= 9
+
+    def test_deutsch_cooperation(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_deutsch_cooperation()
+        assert "cooperation_score" in r
+        assert "overall_orientation" in r
+        assert r["overall_orientation"] in ("cooperative", "competitive", "mixed")
+
+    def test_bush_folger_transformation(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_bush_folger_transformation()
+        assert "party_assessments" in r
+        assert "average_empowerment" in r
+        assert "average_recognition" in r
+
+    def test_batna_analysis(self, populated_graph):
+        ontology.graph = populated_graph
+        r = generate_batna_analysis()
+        assert "party_batnas" in r
+        assert "leverage_balance" in r
+
+    def test_emotional_dynamics_empty(self):
+        r = assess_emotional_dynamics()
+        assert "temperature" in r
+        assert "readiness" in r
+        assert "trust_level" in r
+
+    def test_emotional_dynamics_populated(self, populated_graph):
+        ontology.graph = populated_graph
+        r = assess_emotional_dynamics()
+        assert r["temperature"] in ("hot", "warm", "cool")
 
 
 class TestToolInvalidInputs:
