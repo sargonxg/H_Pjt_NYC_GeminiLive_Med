@@ -86,7 +86,8 @@ def _try_import_adk() -> bool:
 
     # 3. Our agent code
     try:
-        from concordia_agent import root_agent as _ra, graph as _graph
+        from concordia_agent.agent import root_agent as _ra
+        from concordia_agent.ontology import graph as _graph
         import concordia_agent.ontology as _ontology  # noqa: F401
     except Exception as e:
         _adk_errors.append(f"concordia_agent import failed: {e}")
