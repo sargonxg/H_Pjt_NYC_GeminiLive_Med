@@ -233,7 +233,7 @@ async def get_health():
         "active_cases": len(case_manager.active_cases),
         "startup_errors": _adk_errors,
         "python_version": sys.version,
-        "model": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001"),
+        "model": os.getenv("CONCORDIA_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
     }
 
 
@@ -245,7 +245,7 @@ async def get_diagnostics():
         "python_version": sys.version,
         "environment": {
             "PORT": os.getenv("PORT", "8080"),
-            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001"),
+            "CONCORDIA_MODEL": os.getenv("CONCORDIA_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
             "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
             "GOOGLE_API_KEY": "SET" if os.getenv("GOOGLE_API_KEY") else "MISSING",
             "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*"),
@@ -438,12 +438,6 @@ async def get_case(case_id: str):
 @app.post("/api/cases/{case_id}/upload")
 async def upload_document(case_id: str, req: UploadDocumentRequest):
     """Upload a text document for a specific party."""
-    if not _adk_available or ingest_text_for_party is None:
-        raise HTTPException(
-            status_code=503,
-            detail=f"AI agent unavailable — Google ADK not initialized. Errors: {_adk_errors}",
-        )
-
     case = await case_manager.get_case(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -451,6 +445,12 @@ async def upload_document(case_id: str, req: UploadDocumentRequest):
     party = case.parties.get(req.party_id)
     if not party:
         raise HTTPException(status_code=404, detail="Party not found in this case")
+
+    if not _adk_available or ingest_text_for_party is None:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI agent unavailable — Google ADK not initialized. Errors: {_adk_errors}",
+        )
 
     logger.info(
         f"Document upload | {log_ctx(case_id, req.party_id)} "
@@ -652,13 +652,19 @@ async def websocket_endpoint(websocket: WebSocket, case_id: str, party_id: str, 
 
 # ── Shared Session Logic ────────────────────────────────────────────────────
 
-def _build_run_config():
-    """Build RunConfig based on model capabilities."""
+def _build_run_config(audio_mode: bool = False):
+    """Build RunConfig based on model capabilities and requested mode.
+
+    Args:
+        audio_mode: If True AND model supports native audio, use AUDIO responses.
+                    If False, always use TEXT responses (faster, more reliable for tools).
+    """
     from google.adk.agents.run_config import RunConfig, StreamingMode
     from google.genai import types
 
-    model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001")
-    if "native-audio" in model_name:
+    model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")
+
+    if audio_mode and "native-audio" in model_name:
         return RunConfig(
             response_modalities=["AUDIO"],
             speech_config=types.SpeechConfig(
@@ -810,7 +816,7 @@ async def _run_bidi_session(
                 except Exception:
                     pass
             elif "not found for api version" in error_msg or "not supported for bidigeneratecontent" in error_msg or "listmodels" in error_msg:
-                model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.0-flash-live-001")
+                model_name = os.getenv("CONCORDIA_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")
                 try:
                     await websocket.send_json({
                         "type": "error",

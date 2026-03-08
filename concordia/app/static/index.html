@@ -373,12 +373,28 @@ function HelpModal({ onClose }) {
 
           <h3 style={{ ...SH, marginTop: 16 }}>Mediation Flow</h3>
           <ol style={{ paddingLeft: 18, fontSize: 12 }}>
-            <li><strong>Create a case</strong> with 2+ party names</li>
-            <li><strong>Party 1 intake</strong> — tell their story via chat or document upload</li>
-            <li><strong>Party 2 intake</strong> — switch tabs, hear the other side</li>
-            <li><strong>Joint session</strong> — AI bridges perspectives neutrally</li>
-            <li><strong>Resolution</strong> — AI proposes concrete paths forward</li>
+            <li><strong>Create a case</strong> — name both parties and start the mediation</li>
+            <li><strong>Party 1 intake</strong> — the AI guides a structured conversation to understand their perspective, needs, and motivations</li>
+            <li><strong>Party 2 intake</strong> — same structured exploration for the other side</li>
+            <li><strong>Joint session</strong> — AI presents shared ground, identifies divergences, and facilitates dialogue between both parties</li>
+            <li><strong>Resolution</strong> — AI applies multiple conflict resolution frameworks and proposes concrete, tailored solutions</li>
           </ol>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>Theoretical Frameworks Applied</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px", fontSize: 11 }}>
+            <div><strong style={{ color: "var(--accent)" }}>Fisher & Ury</strong> — Principled negotiation: interests over positions</div>
+            <div><strong style={{ color: "var(--blue)" }}>Galtung Triangle</strong> — Attitudes, behavior, contradictions</div>
+            <div><strong style={{ color: "var(--gold)" }}>Glasl Escalation</strong> — 9-stage escalation assessment</div>
+            <div><strong style={{ color: "var(--green)" }}>Deutsch Theory</strong> — Cooperation vs competition dynamics</div>
+            <div><strong style={{ color: "var(--purple)" }}>Bush & Folger</strong> — Transformative mediation: empowerment & recognition</div>
+            <div><strong style={{ color: "var(--orange)" }}>BATNA Analysis</strong> — Best alternative to negotiated agreement</div>
+          </div>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>Psychological Profiling</h3>
+          <p style={{ fontSize: 11, lineHeight: 1.5 }}>
+            The AI detects each party's core drivers (money, fairness, recognition, security, control, reputation)
+            and emotional state. This allows tailored resolution proposals that resonate with what each person truly values.
+          </p>
 
           <h3 style={{ ...SH, marginTop: 16 }}>Keyboard Shortcuts</h3>
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 12px", fontSize: 11 }}>
@@ -776,8 +792,9 @@ function LandingPage({ state, dispatch }) {
       <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 32 }}>
         <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 6, color: "var(--accent)",
           marginBottom: 12, textShadow: "0 0 30px rgba(42,191,172,0.2)" }}>CONCORDIA</h1>
-        <p style={{ fontSize: 13, color: "var(--text2)", maxWidth: 460, lineHeight: 1.6, margin: "0 auto" }}>
-          AI-powered conflict mediation with live knowledge graph</p>
+        <p style={{ fontSize: 13, color: "var(--text2)", maxWidth: 520, lineHeight: 1.6, margin: "0 auto" }}>
+          AI-powered conflict mediation — guided conversations that map the dispute,
+          profile motivations, and apply resolution frameworks to find paths forward</p>
         {diag.model && <p style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
           Model: {diag.model}</p>}
       </div>
@@ -988,8 +1005,12 @@ function ChatPanel({ state, dispatch, wsRef }) {
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
         {msgs.length === 0 && (
-          <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 40, lineHeight: 1.6 }}>
-            Welcome to CONCORDIA.<br />Tell me what's going on.
+          <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 30, lineHeight: 1.8, padding: "0 20px" }}>
+            <div style={{ fontSize: 14, color: "var(--accent)", fontWeight: 600, marginBottom: 8 }}>Welcome to CONCORDIA</div>
+            <div style={{ marginBottom: 12 }}>I'm your AI mediator. Tell me what's going on — I'll listen, ask the right questions, and help build a clear picture of the situation.</div>
+            <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.6 }}>
+              <strong>How this works:</strong> As you share your story, I'll silently map the conflict — who's involved, what each side wants, what's driving them, and where there might be common ground. I'll guide the conversation to make sure nothing important is missed.
+            </div>
           </div>
         )}
         {msgs.map((m, i) => {
@@ -1025,12 +1046,24 @@ function ChatPanel({ state, dispatch, wsRef }) {
                 </div>
               );
             }
-            // Special display for mediation roadmap
-            if (toolName === "get_mediation_roadmap" || toolName === "get_missing_ontology_items") {
+            // Special display for analysis/framework tools
+            const FRAMEWORK_TOOLS = {
+              "get_mediation_roadmap": { icon: "\u{1F5FA}\uFE0F", label: "Mediation Roadmap", color: "var(--accent)" },
+              "get_missing_ontology_items": { icon: "\u{1F50D}", label: "Gap Analysis", color: "var(--accent)" },
+              "assess_fisher_ury": { icon: "\u2696\uFE0F", label: "Fisher & Ury Analysis", color: "var(--accent)" },
+              "assess_galtung_triangle": { icon: "\u25B3", label: "Galtung Conflict Triangle", color: "var(--blue)" },
+              "assess_glasl_escalation": { icon: "\u26A0\uFE0F", label: "Glasl Escalation Assessment", color: "var(--gold)" },
+              "assess_deutsch_cooperation": { icon: "\u{1F91D}", label: "Deutsch Cooperation Analysis", color: "var(--green)" },
+              "assess_bush_folger_transformation": { icon: "\u2728", label: "Transformative Mediation", color: "var(--purple)" },
+              "generate_batna_analysis": { icon: "\u{1F4CA}", label: "BATNA Analysis", color: "var(--orange)" },
+              "assess_emotional_dynamics": { icon: "\u{1F321}\uFE0F", label: "Emotional Dynamics", color: "var(--red)" },
+            };
+            if (FRAMEWORK_TOOLS[toolName]) {
+              const ft = FRAMEWORK_TOOLS[toolName];
               return (
-                <div key={i} style={{ fontSize: 10, color: "var(--accent)", padding: "3px 8px",
-                  background: "var(--accent-glow)", borderRadius: 4, border: "1px solid rgba(42,191,172,0.15)" }}>
-                  <span style={{ fontWeight: 600 }}>{toolName === "get_mediation_roadmap" ? "\u{1F5FA}\uFE0F roadmap" : "\u{1F50D} gap_analysis"}</span>
+                <div key={i} style={{ fontSize: 10, color: ft.color, padding: "3px 8px",
+                  background: `${ft.color}11`, borderRadius: 4, border: `1px solid ${ft.color}25` }}>
+                  <span style={{ fontWeight: 600 }}>{ft.icon} {ft.label}</span>
                 </div>
               );
             }

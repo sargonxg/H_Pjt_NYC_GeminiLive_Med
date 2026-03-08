@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # API & Model
     GOOGLE_API_KEY: str = ""
-    CONCORDIA_MODEL: str = "gemini-2.0-flash-live-001"
+    CONCORDIA_MODEL: str = "gemini-2.5-flash-native-audio-preview-12-2025"
 
     # Multi-party limits
     MAX_PARTIES_PER_CASE: int = Field(default=6, ge=2, le=20)
