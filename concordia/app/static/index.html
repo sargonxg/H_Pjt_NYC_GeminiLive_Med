@@ -1319,6 +1319,11 @@ function IntelPanel({ state, dispatch }) {
       dispatch({ type:"UPDATE_CASE", v: { phase:d.current_phase, parties:d.parties } });
       dispatch({ type:"PHASE_OVERLAY", v:d.current_phase });
       setTimeout(() => dispatch({ type:"PHASE_OVERLAY", v:null }), 1500);
+      // Auto-switch to the newly active party
+      if (d.parties) {
+        const newActive = Object.entries(d.parties).find(([,p]) => p.status === "active");
+        if (newActive) dispatch({ type:"SET_ACTIVE_PARTY", v:newActive[0] });
+      }
     } catch {}
   };
 
@@ -1448,6 +1453,7 @@ function IntelPanel({ state, dispatch }) {
 /* ── Dashboard ──────────────────────────────────────────────────── */
 function Dashboard({ state, dispatch }) {
   const wsRef = useRef({});
+  const [reconnectKey, setReconnectKey] = React.useState(0);
   const { currentCase: cc, activePartyId: apid } = state;
 
   // Connect WS for active party
@@ -1469,7 +1475,7 @@ function Dashboard({ state, dispatch }) {
       setTimeout(() => {
         if (wsRef.current[apid] === ws) {
           delete wsRef.current[apid];
-          dispatch({ type: "SET_ACTIVE_PARTY", v: apid }); // trigger reconnect
+          setReconnectKey(k => k + 1); // increment to re-trigger useEffect for reconnect
         }
       }, 2000);
     };
@@ -1489,7 +1495,7 @@ function Dashboard({ state, dispatch }) {
       } catch {}
     };
     wsRef.current[apid] = ws;
-  }, [cc?.case_id, apid]);
+  }, [cc?.case_id, apid, reconnectKey]);
 
   // Poll case data for party health
   useEffect(() => {
