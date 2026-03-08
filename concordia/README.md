@@ -76,8 +76,8 @@ Browser (React 18 + D3.js)
                      ▼
 ┌─────────────────────────────────────────────┐
 │  Gemini Live API                            │
-│  • gemini-2.0-flash (text, default)         │
-│  • gemini-2.5-flash-native-audio (voice)    │
+│  • gemini-3-flash-preview (text, default)    │
+│  • gemini-3-flash-preview-native-audio      │
 │  • Bidi-streaming via LiveRequestQueue      │
 └─────────────────────────────────────────────┘
 ```
@@ -321,7 +321,7 @@ All configuration is via environment variables. Copy `app/.env.example` to `app/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GOOGLE_API_KEY` | *(required)* | Gemini API key from [AI Studio](https://aistudio.google.com/apikey) |
-| `CONCORDIA_MODEL` | `gemini-2.0-flash` | Model ID. Use `gemini-2.5-flash-native-audio-preview-12-2025` for voice mode |
+| `CONCORDIA_MODEL` | `gemini-3-flash-preview` | Model ID. Use `gemini-3-flash-preview-native-audio` for voice mode |
 | `GOOGLE_GENAI_USE_VERTEXAI` | `FALSE` | Set `TRUE` to use Vertex AI instead of Gemini API |
 | `GOOGLE_CLOUD_PROJECT` | — | GCP project ID (Vertex AI only) |
 | `GOOGLE_CLOUD_LOCATION` | `us-central1` | GCP region (Vertex AI only) |
