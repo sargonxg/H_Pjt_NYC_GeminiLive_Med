@@ -1,0 +1,15 @@
+{
+  "title": "Workplace Performance Dispute",
+  "parties": [
+    {
+      "name": "Alex (Senior Developer)",
+      "story": "I've been a senior developer here for 5 years. In the last team meeting, Maya publicly criticized my code review process in front of the entire team and our manager. She said my reviews were 'blocking the team' and 'unnecessarily pedantic.' I felt humiliated. I've always done thorough reviews because quality matters — we've caught critical bugs this way. I requested formal mediation through HR because this isn't the first time she's been aggressive in meetings. Last quarter she reassigned two of my tasks without telling me. I want a formal apology, clear code review guidelines that the whole team agrees on, and assurance that performance discussions happen privately, not in front of everyone.",
+      "documents": []
+    },
+    {
+      "name": "Maya (Team Lead)",
+      "story": "I'm the team lead and I'm responsible for shipping on time. Alex's code reviews regularly take 3-5 business days and block the entire sprint. In the meeting, I raised this as a process concern — I wasn't attacking Alex personally. I said we need faster turnaround on reviews, and the team agreed. I think Alex took it personally because I was direct about the impact on our delivery metrics. I've tried to address this privately three times before — in our 1-on-1s in January, February, and March — but nothing changed. The sprint velocity has dropped 30% this quarter because of review bottlenecks. I want a maximum 24-hour review SLA and a lighter review checklist for minor changes. I'm willing to acknowledge the meeting could have been handled better, but the underlying issue needs to be solved.",
+      "documents": []
+    }
+  ]
+}
