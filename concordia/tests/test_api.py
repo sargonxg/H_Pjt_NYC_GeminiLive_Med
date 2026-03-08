@@ -50,9 +50,9 @@ class TestSetKeyEndpoint:
         assert r.json()["status"] == "ok"
 
     def test_set_key_empty(self, client):
-        # Empty string is technically valid (just clears)
+        # Empty string is rejected with 400 (validation)
         r = client.post("/api/set-key", json={"key": ""})
-        assert r.status_code == 200
+        assert r.status_code == 400
 
 
 class TestCasesEndpoints:
