@@ -1,0 +1,15 @@
+{
+  "title": "Residential Lease Dispute",
+  "parties": [
+    {
+      "name": "Jordan Chen (Tenant)",
+      "story": "I've been renting this apartment for 3 years. Six months ago, the kitchen sink started leaking. I reported it to the landlord immediately via email and text. She said she'd send someone, but nobody came for 3 weeks. The leak damaged my hardwood cutting board collection worth about $800 and caused mold to grow under the sink. I hired a plumber myself and paid $450. When I asked to deduct it from rent, she refused and said I should have waited. I withheld $450 from last month's rent and now she's threatening eviction. I also asked for my $3,000 security deposit accounting because my lease is up in 2 months and I've heard she never returns deposits. I want reimbursement for the plumber and my damaged property, a guarantee my security deposit will be returned in full, and the mold professionally remediated.",
+      "documents": []
+    },
+    {
+      "name": "Patricia Morales (Landlord)",
+      "story": "I own 12 rental units and manage them myself. Jordan reported the leak, and I scheduled a repair within the week, but my regular plumber had a family emergency. I told Jordan I was working on it. Instead of waiting, he hired his own plumber without my authorization — that's a lease violation. The plumber he hired charged twice the market rate. I can't just let tenants deduct whatever they want from rent — that sets a dangerous precedent for my other tenants. As for the security deposit, I always return what's owed after proper inspection. Jordan's apartment has scuff marks on the walls and a stain on the carpet that weren't there at move-in. The lease clearly states I have 30 days after move-out to return the deposit. I want full rent paid including the withheld amount, and I want Jordan to understand that maintenance requests go through me, not around me.",
+      "documents": []
+    }
+  ]
+}

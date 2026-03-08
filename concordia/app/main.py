@@ -624,10 +624,20 @@ async def serve_index():
     return FileResponse(static_dir / "index.html")
 
 
+@app.get("/workbench")
+async def serve_workbench():
+    """Serve the developer workbench."""
+    wb = static_dir / "workbench.html"
+    if wb.exists():
+        return FileResponse(wb)
+    return FileResponse(static_dir / "index.html")
+
+
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # ── Entry Point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    port = int(os.getenv("PORT", "8080"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

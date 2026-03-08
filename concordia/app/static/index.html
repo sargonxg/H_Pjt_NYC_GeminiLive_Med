@@ -10,8 +10,7 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 /* ================================================================
-   CONCORDIA — Design System
-   "Linear meets Palantir" dark premium aesthetic
+   CONCORDIA Design System — "Linear meets Palantir"
    ================================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -50,218 +49,136 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-/* ── Animated Background for Landing ────────────────────────────── */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-
 .landing-bg {
   background: linear-gradient(-45deg, #0a0a0f, #0d1520, #0a1518, #0a0a0f);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
 
-/* ── Pulse Ring Animation ───────────────────────────────────────── */
 @keyframes pulseRing {
   0% { transform: scale(1); opacity: 0.6; }
   100% { transform: scale(2.5); opacity: 0; }
 }
-
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232,93,93,0.4); }
   50% { box-shadow: 0 0 0 8px rgba(232,93,93,0); }
 }
-
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-@keyframes nodeEnter {
-  0% { r: 0; opacity: 0; }
-  60% { opacity: 1; }
-  100% { opacity: 1; }
-}
-
 @keyframes phaseOverlay {
   0% { opacity: 0; }
   15% { opacity: 1; }
   85% { opacity: 1; }
   100% { opacity: 0; }
 }
-
-@keyframes countUp {
-  from { opacity: 0.5; }
-  to { opacity: 1; }
-}
-
 @keyframes dashFlow {
   to { stroke-dashoffset: -20; }
 }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
-/* ── Button Base ────────────────────────────────────────────────── */
 .btn {
-  border: none;
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
+  border: none; border-radius: var(--radius); font-family: var(--font);
+  font-size: 13px; font-weight: 600; cursor: pointer;
   transition: all var(--transition);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
-
-.btn-primary {
-  background: var(--accent);
-  color: #0a0a0f;
-  padding: 10px 24px;
-}
+.btn-primary { background: var(--accent); color: #0a0a0f; padding: 10px 24px; }
 .btn-primary:hover { background: #35d4bf; transform: translateY(-1px); }
-
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .btn-secondary {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent-dim);
-  padding: 10px 24px;
+  background: transparent; color: var(--accent);
+  border: 1px solid var(--accent-dim); padding: 10px 24px;
 }
 .btn-secondary:hover { background: var(--accent-glow); }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text2);
-  padding: 6px 12px;
-}
+.btn-ghost { background: transparent; color: var(--text2); padding: 6px 12px; }
 .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-
 .btn-sm { padding: 6px 14px; font-size: 11px; }
+.btn-danger { background: var(--red); color: #fff; padding: 6px 14px; font-size: 11px; }
 
-/* ── Modal / Overlay ────────────────────────────────────────────── */
 .modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px); display: flex; align-items: center;
+  justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease;
 }
-
 .modal {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  width: 90%;
-  max-width: 520px;
-  box-shadow: var(--shadow-lg);
-  animation: fadeInUp 0.3s ease;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 32px; width: 90%; max-width: 520px;
+  box-shadow: var(--shadow-lg); animation: fadeInUp 0.3s ease;
+  max-height: 90vh; overflow-y: auto;
 }
-
-.modal h2 {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--text);
-  margin-bottom: 20px;
-}
-
+.modal h2 { font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--text); margin-bottom: 20px; }
 .modal-input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 13px;
-  outline: none;
-  transition: border-color var(--transition);
-  margin-bottom: 12px;
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 14px; border-radius: var(--radius);
+  font-family: var(--font); font-size: 13px; outline: none;
+  transition: border-color var(--transition); margin-bottom: 12px;
 }
 .modal-input:focus { border-color: var(--accent-dim); }
 .modal-input::placeholder { color: var(--muted); }
-
 .modal-textarea {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 12px;
-  outline: none;
-  resize: vertical;
-  min-height: 120px;
-  transition: border-color var(--transition);
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 14px; border-radius: var(--radius);
+  font-family: var(--font); font-size: 12px; outline: none;
+  resize: vertical; min-height: 120px;
 }
 .modal-textarea:focus { border-color: var(--accent-dim); }
 .modal-textarea::placeholder { color: var(--muted); }
-
 .modal-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  display: block;
+  font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 6px; display: block;
 }
 
-/* ── Phase Overlay ──────────────────────────────────────────────── */
 .phase-overlay {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(10,10,15,0.9);
-  z-index: 2000;
-  animation: phaseOverlay 1.5s ease forwards;
-  pointer-events: none;
+  position: fixed; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,10,15,0.9);
+  z-index: 2000; animation: phaseOverlay 1.5s ease forwards; pointer-events: none;
 }
 .phase-overlay-text {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 6px;
-  color: var(--accent);
-  text-transform: uppercase;
+  font-size: 28px; font-weight: 700; letter-spacing: 6px;
+  color: var(--accent); text-transform: uppercase;
   text-shadow: 0 0 40px rgba(42,191,172,0.3);
 }
 
-/* ── Circular Progress ──────────────────────────────────────────── */
-.circular-progress {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+.circular-progress { position: relative; display: inline-flex; align-items: center; justify-content: center; }
 .circular-progress svg { transform: rotate(-90deg); }
-.circular-progress .progress-text {
-  position: absolute;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-}
+.circular-progress .progress-text { position: absolute; font-size: 18px; font-weight: 700; }
 .circular-progress .progress-label {
-  position: absolute;
-  bottom: -2px;
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  position: absolute; bottom: -2px; font-size: 9px; color: var(--muted);
+  letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* Diagnostic banner */
+.diag-banner {
+  padding: 8px 16px; font-size: 11px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.diag-banner.error { background: rgba(232,93,93,0.1); color: var(--red); }
+.diag-banner.warn { background: rgba(232,184,77,0.1); color: var(--gold); }
+.diag-banner.info { background: rgba(42,191,172,0.05); color: var(--accent); }
+.diag-banner.ok { background: rgba(107,191,138,0.05); color: var(--green); }
+
+/* Tooltip */
+.tooltip-box {
+  position: fixed; z-index: 999; background: #1a1a2e; border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: var(--radius); font-size: 11px;
+  max-width: 280px; pointer-events: none; box-shadow: var(--shadow-lg);
 }
 </style>
 </head>
@@ -270,11 +187,9 @@ html, body, #root {
 
 <script type="text/babel">
 /* ================================================================
-   CONCORDIA — React Frontend
-   Single-file React app with D3 graph, multi-party mediation UX
+   CONCORDIA React Frontend
    ================================================================ */
-
-const { useState, useEffect, useRef, useCallback, useMemo, useReducer } = React;
+const { useState, useEffect, useRef, useCallback, useReducer } = React;
 
 /* ── Constants ──────────────────────────────────────────────────── */
 const COLORS = {
@@ -282,199 +197,242 @@ const COLORS = {
   constraint: "#6bbf8a", leverage: "#e8b84d", commitment: "#b07fd0",
   event: "#e8864d", narrative: "#6bcfaf",
 };
-
 const TYPE_LABELS = {
   actor: "Actor", claim: "Claim", interest: "Interest",
   constraint: "Constraint", leverage: "Leverage",
   commitment: "Commitment", event: "Event", narrative: "Narrative",
 };
-
 const TYPE_ICONS = {
   actor: "\u25CF", claim: "\u25C6", interest: "\u25B2",
   constraint: "\u25A0", leverage: "\u2B21", commitment: "\u25CB",
   event: "\u25C8", narrative: "\u2662",
 };
-
 const PHASE_COLORS = {
-  arrive: "#5a6577", structure: "#4ba3d1",
-  verify: "#e8b84d", resolve: "#2abfac",
+  arrive: "#5a6577", structure: "#4ba3d1", verify: "#e8b84d", resolve: "#2abfac",
   intake_party_1: "#4ba3d1", intake_party_2: "#e8864d",
   joint_session: "#b07fd0", resolution: "#2abfac",
 };
-
-const PARTY_GLOW_COLORS = [
-  "rgba(75, 163, 209, 0.5)",
-  "rgba(232, 134, 77, 0.5)",
-  "rgba(176, 127, 208, 0.5)",
-  "rgba(107, 191, 138, 0.5)",
+const PARTY_GLOW = [
+  "rgba(75,163,209,0.5)", "rgba(232,134,77,0.5)",
+  "rgba(176,127,208,0.5)", "rgba(107,191,138,0.5)",
 ];
-
-function nodeType(id) {
-  if (!id) return "actor";
-  return id.split("_")[0] || "actor";
-}
-
-function nodeColor(id) { return COLORS[nodeType(id)] || "#5a6577"; }
 
 function genId() { return Math.random().toString(36).slice(2, 10); }
 
-/* ── State Reducer ──────────────────────────────────────────────── */
-const initialState = {
-  view: "landing",          // "landing" | "dashboard"
-  currentCase: null,
-  activePartyId: null,
-  messages: {},             // { [partyId]: Message[] }
-  graphData: null,
-  healthData: null,
-  partyHealth: {},
-  selectedNode: null,
-  wsConnections: {},        // managed outside reducer
-  apiKey: "",
-  apiKeySet: false,
-  cases: [],
-  phaseOverlay: null,
-  filterType: null,
+/* ── Reducer ────────────────────────────────────────────────────── */
+const init = {
+  view: "landing", currentCase: null, activePartyId: null,
+  messages: {}, graphData: null, healthData: null, partyHealth: {},
+  selectedNode: null, apiKeySet: false, cases: [],
+  phaseOverlay: null, filterType: null,
+  diagnostics: { server: "checking", gemini: "unknown", ws: "disconnected", errors: [] },
+  showHelp: false,
 };
 
-function reducer(state, action) {
-  switch (action.type) {
-    case "SET_VIEW":
-      return { ...state, view: action.payload };
-    case "SET_CASE":
-      return {
-        ...state,
-        currentCase: action.payload,
-        view: "dashboard",
-        messages: {},
-        graphData: null,
-        healthData: null,
-        partyHealth: {},
-        selectedNode: null,
-        activePartyId: action.payload?.parties ? Object.keys(action.payload.parties)[0] : null,
-      };
-    case "SET_ACTIVE_PARTY":
-      return { ...state, activePartyId: action.payload };
-    case "ADD_MESSAGE": {
-      const { partyId, message } = action.payload;
-      const msgs = { ...state.messages };
-      msgs[partyId] = [...(msgs[partyId] || []), message];
-      return { ...state, messages: msgs };
+function reducer(s, a) {
+  switch (a.type) {
+    case "SET_VIEW": return { ...s, view: a.v };
+    case "SET_CASE": return { ...s, currentCase: a.v, view: "dashboard", messages: {},
+      graphData: null, healthData: null, partyHealth: {}, selectedNode: null,
+      activePartyId: a.v?.parties ? Object.keys(a.v.parties)[0] : null };
+    case "SET_ACTIVE_PARTY": return { ...s, activePartyId: a.v };
+    case "ADD_MSG": {
+      const m = { ...s.messages };
+      m[a.pid] = [...(m[a.pid] || []), a.msg];
+      return { ...s, messages: m };
     }
-    case "UPDATE_GRAPH":
-      return { ...state, graphData: action.payload };
-    case "UPDATE_HEALTH":
-      return { ...state, healthData: action.payload };
-    case "UPDATE_PARTY_HEALTH":
-      return { ...state, partyHealth: { ...state.partyHealth, [action.payload.partyId]: action.payload.health } };
-    case "SELECT_NODE":
-      return { ...state, selectedNode: action.payload };
-    case "SET_API_KEY":
-      return { ...state, apiKey: action.payload, apiKeySet: true };
-    case "SET_CASES":
-      return { ...state, cases: action.payload };
-    case "UPDATE_CASE":
-      return { ...state, currentCase: { ...state.currentCase, ...action.payload } };
-    case "SET_PHASE_OVERLAY":
-      return { ...state, phaseOverlay: action.payload };
-    case "SET_FILTER":
-      return { ...state, filterType: action.payload === state.filterType ? null : action.payload };
-    default:
-      return state;
+    case "UPDATE_GRAPH": return { ...s, graphData: a.v };
+    case "UPDATE_HEALTH": return { ...s, healthData: a.v };
+    case "UPDATE_PARTY_HEALTH": return { ...s, partyHealth: { ...s.partyHealth, [a.pid]: a.v } };
+    case "SELECT_NODE": return { ...s, selectedNode: a.v };
+    case "API_KEY_SET": return { ...s, apiKeySet: true };
+    case "SET_CASES": return { ...s, cases: a.v };
+    case "UPDATE_CASE": return { ...s, currentCase: { ...s.currentCase, ...a.v } };
+    case "PHASE_OVERLAY": return { ...s, phaseOverlay: a.v };
+    case "SET_FILTER": return { ...s, filterType: a.v === s.filterType ? null : a.v };
+    case "DIAG": return { ...s, diagnostics: { ...s.diagnostics, ...a.v } };
+    case "DIAG_ERROR": return { ...s, diagnostics: { ...s.diagnostics, errors: [...s.diagnostics.errors.slice(-4), a.v] } };
+    case "TOGGLE_HELP": return { ...s, showHelp: !s.showHelp };
+    default: return s;
   }
 }
 
-/* ================================================================
-   COMPONENTS
-   ================================================================ */
-
-/* ── Circular Progress Indicator ────────────────────────────────── */
+/* ── Shared Components ──────────────────────────────────────────── */
 function CircularProgress({ value, size = 80, stroke = 6, label }) {
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
-  const color = value >= 75 ? "#6bbf8a" : value >= 40 ? "#e8b84d" : "#e85d5d";
-
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const off = c - (value / 100) * c;
+  const col = value >= 75 ? "#6bbf8a" : value >= 40 ? "#e8b84d" : "#e85d5d";
   return (
     <div className="circular-progress" style={{ width: size, height: size }}>
       <svg width={size} height={size}>
-        <circle cx={size/2} cy={size/2} r={radius}
-          fill="none" stroke="#1a1a2e" strokeWidth={stroke} />
-        <circle cx={size/2} cy={size/2} r={radius}
-          fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          strokeLinecap="round"
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1a1a2e" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={stroke}
+          strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round"
           style={{ transition: "stroke-dashoffset 0.8s ease, stroke 0.5s ease" }} />
       </svg>
-      <span className="progress-text" style={{ color }}>{value}%</span>
+      <span className="progress-text" style={{ color: col }}>{value}%</span>
       {label && <span className="progress-label">{label}</span>}
     </div>
   );
 }
 
-/* ── Phase Badge ────────────────────────────────────────────────── */
 function PhaseBadge({ phase }) {
   const bg = PHASE_COLORS[phase] || "#5a6577";
-  const label = (phase || "arrive").replace(/_/g, " ").toUpperCase();
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 600, letterSpacing: 1,
-      padding: "3px 10px", borderRadius: 10, textTransform: "uppercase",
-      background: bg, color: "#0a0a0f", whiteSpace: "nowrap",
-    }}>{label}</span>
+    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, padding: "3px 10px",
+      borderRadius: 10, background: bg, color: "#0a0a0f", whiteSpace: "nowrap",
+      textTransform: "uppercase" }}>
+      {(phase || "arrive").replace(/_/g, " ")}
+    </span>
   );
 }
 
-/* ── Status Dot ─────────────────────────────────────────────────── */
 function StatusDot({ status }) {
-  const colors = { waiting: "#e85d5d", active: "#e8b84d", complete: "#6bbf8a" };
+  const c = { waiting: "#e85d5d", active: "#e8b84d", complete: "#6bbf8a" };
+  return <span style={{ width: 8, height: 8, borderRadius: "50%", background: c[status] || "#5a6577",
+    display: "inline-block", flexShrink: 0 }} />;
+}
+
+const SH = { fontSize: 10, fontWeight: 600, letterSpacing: 1.5, color: "#5a6577",
+  textTransform: "uppercase", marginBottom: 10 };
+
+/* ── Diagnostics Panel ──────────────────────────────────────────── */
+function DiagnosticsBar({ diag }) {
+  if (diag.server === "ok" && diag.gemini !== "no_api_key") return null;
+  if (diag.server === "checking") return (
+    <div className="diag-banner info">
+      <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#x21BB;</span>
+      Checking server connection...
+    </div>
+  );
+  if (diag.server === "down") return (
+    <div className="diag-banner error">
+      <strong>Server unreachable.</strong>&nbsp;
+      Make sure the backend is running: <code>cd concordia/app && uvicorn main:app --port 8080</code>
+    </div>
+  );
+  if (diag.gemini === "no_api_key") return (
+    <div className="diag-banner warn">
+      <strong>No Gemini API key configured.</strong>&nbsp;
+      Enter your key above or set <code>GOOGLE_API_KEY</code> in <code>app/.env</code>.
+      Get one at <a href="https://aistudio.google.com/apikey" target="_blank"
+        style={{ color: "var(--accent)" }}>aistudio.google.com/apikey</a>
+    </div>
+  );
+  return null;
+}
+
+/* ── Help Modal ─────────────────────────────────────────────────── */
+function HelpModal({ onClose }) {
   return (
-    <span style={{
-      width: 8, height: 8, borderRadius: "50%",
-      background: colors[status] || "#5a6577",
-      display: "inline-block", flexShrink: 0,
-    }} />
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 640 }}>
+        <h2>How CONCORDIA Works</h2>
+
+        <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.7, marginBottom: 16 }}>
+          <p style={{ marginBottom: 12 }}>
+            CONCORDIA is an AI-powered conflict mediator. It listens to each party's story,
+            silently builds a structured <strong style={{ color: "var(--text)" }}>conflict knowledge graph</strong>,
+            and uses it to find resolution paths.
+          </p>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>The 8 Conflict Primitives</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px" }}>
+            {Object.entries(COLORS).map(([t, c]) => (
+              <div key={t} style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 0" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />
+                <strong style={{ color: "var(--text)", minWidth: 80 }}>{TYPE_LABELS[t]}</strong>
+                <span style={{ fontSize: 11 }}>
+                  {({
+                    actor: "People & organizations involved",
+                    claim: "Demands, accusations, proposals",
+                    interest: "Underlying needs (security, identity...)",
+                    constraint: "Legal, financial, time limits",
+                    leverage: "Power dynamics & influence",
+                    commitment: "Promises — kept, broken, or pending",
+                    event: "Timeline of key events",
+                    narrative: "How each side frames the story",
+                  })[t]}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>Mediation Flow</h3>
+          <ol style={{ paddingLeft: 18, fontSize: 12 }}>
+            <li><strong>Create a case</strong> with 2+ party names</li>
+            <li><strong>Party 1 intake</strong> — tell their story via chat or document upload</li>
+            <li><strong>Party 2 intake</strong> — switch tabs, hear the other side</li>
+            <li><strong>Joint session</strong> — AI bridges perspectives neutrally</li>
+            <li><strong>Resolution</strong> — AI proposes concrete paths forward</li>
+          </ol>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>Keyboard Shortcuts</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 12px", fontSize: 11 }}>
+            <code style={{ color: "var(--accent)" }}>Enter</code><span>Send message</span>
+            <code style={{ color: "var(--accent)" }}>Ctrl+M</code><span>Toggle microphone</span>
+            <code style={{ color: "var(--accent)" }}>Ctrl+1-4</code><span>Switch party tab</span>
+            <code style={{ color: "var(--accent)" }}>Esc</code><span>Close modal</span>
+          </div>
+
+          <h3 style={{ ...SH, marginTop: 16 }}>Troubleshooting</h3>
+          <div style={{ fontSize: 11, lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 4 }}>
+              <strong style={{ color: "var(--gold)" }}>No API key?</strong> Get one at{" "}
+              <a href="https://aistudio.google.com/apikey" target="_blank" style={{ color: "var(--accent)" }}>
+                aistudio.google.com/apikey</a>
+            </div>
+            <div style={{ marginBottom: 4 }}>
+              <strong style={{ color: "var(--gold)" }}>WebSocket won't connect?</strong> Check that the server is running
+              and you're on the same host/port.
+            </div>
+            <div style={{ marginBottom: 4 }}>
+              <strong style={{ color: "var(--gold)" }}>Quota exhausted?</strong> Wait 60s or switch to a different API key.
+              Gemini has per-minute rate limits.
+            </div>
+            <div>
+              <strong style={{ color: "var(--gold)" }}>Graph not updating?</strong> The agent extracts data silently.
+              Keep talking — nodes appear as the AI identifies conflict primitives.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right", marginTop: 16 }}>
+          <button className="btn btn-primary btn-sm" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 /* ── API Key Bar ────────────────────────────────────────────────── */
-function ApiKeyBar({ onSet }) {
+function ApiKeyBar({ dispatch }) {
   const [key, setKey] = useState("");
   const [hidden, setHidden] = useState(false);
-
   const submit = async () => {
     if (!key.trim()) return;
     try {
-      await fetch("/api/set-key", {
-        method: "POST",
+      await fetch("/api/set-key", { method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: key.trim() }),
-      });
-      onSet(key.trim());
+        body: JSON.stringify({ key: key.trim() }) });
+      dispatch({ type: "API_KEY_SET" });
+      dispatch({ type: "DIAG", v: { gemini: "configured" } });
       setHidden(true);
-    } catch {}
+    } catch { dispatch({ type: "DIAG_ERROR", v: "Failed to set API key" }); }
   };
-
   if (hidden) return null;
   return (
-    <div style={{
-      padding: "8px 20px", background: "#1a1020",
-      borderBottom: "1px solid #2a1a3e",
-      display: "flex", alignItems: "center", gap: 10,
-    }}>
+    <div style={{ padding: "8px 20px", background: "#1a1020", borderBottom: "1px solid #2a1a3e",
+      display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
       <label style={{ color: "#8896a8", fontSize: 11, letterSpacing: 1, fontWeight: 600 }}>
-        GEMINI API KEY
-      </label>
+        GEMINI API KEY</label>
       <input type="password" value={key} onChange={e => setKey(e.target.value)}
-        placeholder="Enter your Gemini API key..."
+        placeholder="Paste your Gemini API key..."
         onKeyDown={e => e.key === "Enter" && submit()}
-        style={{
-          flex: 1, background: "#0d0d18", border: "1px solid #2a1a3e",
-          color: "var(--text)", padding: "6px 12px", borderRadius: 4,
-          fontFamily: "var(--font)", fontSize: 12, outline: "none",
-        }} />
+        style={{ flex: 1, background: "#0d0d18", border: "1px solid #2a1a3e", color: "var(--text)",
+          padding: "6px 12px", borderRadius: 4, fontFamily: "var(--font)", fontSize: 12, outline: "none" }} />
       <button className="btn btn-primary btn-sm" onClick={submit}>Connect</button>
-      <button className="btn btn-ghost btn-sm" onClick={() => setHidden(true)}
-        style={{ fontSize: 10 }}>Skip</button>
+      <button className="btn btn-ghost btn-sm" onClick={() => setHidden(true)} style={{ fontSize: 10 }}>Skip</button>
     </div>
   );
 }
@@ -484,36 +442,19 @@ function CreateCaseModal({ onClose, onCreated }) {
   const [title, setTitle] = useState("");
   const [parties, setParties] = useState(["", ""]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const addParty = () => {
-    if (parties.length < 4) setParties([...parties, ""]);
-  };
-
-  const updateParty = (i, val) => {
-    const p = [...parties]; p[i] = val; setParties(p);
-  };
-
-  const removeParty = (i) => {
-    if (parties.length > 2) setParties(parties.filter((_, idx) => idx !== i));
-  };
+  const [err, setErr] = useState("");
 
   const submit = async () => {
     const names = parties.map(p => p.trim()).filter(Boolean);
-    if (names.length < 2) { setError("Need at least 2 party names."); return; }
-    setLoading(true); setError("");
+    if (names.length < 2) { setErr("Enter at least 2 party names."); return; }
+    setLoading(true); setErr("");
     try {
-      const r = await fetch("/api/cases", {
-        method: "POST",
+      const r = await fetch("/api/cases", { method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), parties: names }),
-      });
-      if (!r.ok) { setError("Failed to create case."); setLoading(false); return; }
-      const data = await r.json();
-      onCreated(data);
-    } catch (e) {
-      setError("Network error."); setLoading(false);
-    }
+        body: JSON.stringify({ title: title.trim(), parties: names }) });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); setErr(d.detail || "Failed"); setLoading(false); return; }
+      onCreated(await r.json());
+    } catch { setErr("Network error — is the server running?"); setLoading(false); }
   };
 
   return (
@@ -523,32 +464,24 @@ function CreateCaseModal({ onClose, onCreated }) {
         <label className="modal-label">Case Title (optional)</label>
         <input className="modal-input" value={title} onChange={e => setTitle(e.target.value)}
           placeholder="e.g. Chen-Martinez Lease Dispute" />
-
-        <label className="modal-label" style={{ marginTop: 8 }}>Parties</label>
+        <label className="modal-label" style={{ marginTop: 4 }}>Parties</label>
         {parties.map((p, i) => (
           <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <input className="modal-input" value={p}
-              onChange={e => updateParty(i, e.target.value)}
-              placeholder={`Party ${i + 1} name`}
-              style={{ marginBottom: 0, flex: 1 }} />
-            {parties.length > 2 && (
-              <button className="btn btn-ghost btn-sm" onClick={() => removeParty(i)}
-                style={{ color: "var(--red)", fontSize: 14 }}>×</button>
-            )}
+            <input className="modal-input" value={p} onChange={e => {
+              const a = [...parties]; a[i] = e.target.value; setParties(a); }}
+              placeholder={`Party ${i+1} name`} style={{ marginBottom: 0, flex: 1 }} />
+            {parties.length > 2 && <button className="btn btn-ghost btn-sm"
+              onClick={() => setParties(parties.filter((_,j) => j !== i))}
+              style={{ color: "var(--red)" }}>×</button>}
           </div>
         ))}
-        {parties.length < 4 && (
-          <button className="btn btn-ghost btn-sm" onClick={addParty}
-            style={{ marginBottom: 16 }}>+ Add Party</button>
-        )}
-
-        {error && <div style={{ color: "var(--red)", fontSize: 12, marginBottom: 12 }}>{error}</div>}
-
-        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+        {parties.length < 4 && <button className="btn btn-ghost btn-sm"
+          onClick={() => setParties([...parties, ""])} style={{ marginBottom: 12 }}>+ Add Party</button>}
+        {err && <div style={{ color: "var(--red)", fontSize: 12, marginBottom: 8 }}>{err}</div>}
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 12 }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={submit} disabled={loading}>
-            {loading ? "Creating..." : "Create Case"}
-          </button>
+            {loading ? "Creating..." : "Create Case"}</button>
         </div>
       </div>
     </div>
@@ -556,9 +489,9 @@ function CreateCaseModal({ onClose, onCreated }) {
 }
 
 /* ── Upload Text Modal ──────────────────────────────────────────── */
-function UploadTextModal({ onClose, caseId, partyId, partyName, onUploaded }) {
+function UploadModal({ onClose, caseId, partyId, partyName, onDone }) {
   const [text, setText] = useState("");
-  const [docName, setDocName] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -566,21 +499,14 @@ function UploadTextModal({ onClose, caseId, partyId, partyName, onUploaded }) {
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const r = await fetch(`/api/cases/${caseId}/upload`, {
-        method: "POST",
+      const r = await fetch(`/api/cases/${caseId}/upload`, { method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          party_id: partyId,
-          text: text.trim(),
-          document_name: docName.trim() || "Pasted Document",
-        }),
-      });
-      const data = await r.json();
-      setResult(data);
-      if (onUploaded) onUploaded(data);
-    } catch {
-      setResult({ status: "error", error: "Upload failed" });
-    }
+        body: JSON.stringify({ party_id: partyId, text: text.trim(),
+          document_name: name.trim() || "Pasted Document" }) });
+      const d = await r.json();
+      setResult(d);
+      if (onDone) onDone(d);
+    } catch { setResult({ status: "error", error: "Upload failed — check server logs" }); }
     setLoading(false);
   };
 
@@ -588,42 +514,36 @@ function UploadTextModal({ onClose, caseId, partyId, partyName, onUploaded }) {
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: 600 }}>
         <h2>Upload Document — {partyName}</h2>
+        <p style={{ fontSize: 11, color: "var(--text2)", marginBottom: 12, lineHeight: 1.5 }}>
+          Paste any text and CONCORDIA will automatically extract conflict primitives.
+          Supported: plain text, email chains (From:/Subject:/Date:), or structured JSON.
+        </p>
         <label className="modal-label">Document Name</label>
-        <input className="modal-input" value={docName} onChange={e => setDocName(e.target.value)}
+        <input className="modal-input" value={name} onChange={e => setName(e.target.value)}
           placeholder="e.g. Lease Agreement, Email Chain" />
-
         <label className="modal-label">Document Text</label>
         <textarea className="modal-textarea" value={text} onChange={e => setText(e.target.value)}
-          placeholder={"Paste the document text here...\n\nSupported formats:\n- Plain text\n- Email chains (From: / Subject: / Date:)\n- Structured JSON: { party_name, their_story, what_they_want, key_events, documents }"}
-          style={{ minHeight: 200 }} />
-
+          placeholder="Paste the document text here..." style={{ minHeight: 180 }} />
         {result && (
-          <div style={{
-            marginTop: 12, padding: 12, background: "var(--bg)",
-            borderRadius: "var(--radius)", fontSize: 12,
-            color: result.status === "error" ? "var(--red)" : "var(--green)",
-          }}>
+          <div style={{ marginTop: 12, padding: 12, background: "var(--bg)", borderRadius: "var(--radius)",
+            fontSize: 12, border: "1px solid var(--border)",
+            color: result.status === "error" ? "var(--red)" : "var(--green)" }}>
             {result.status === "ingested" ? (
               <div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Document processed</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Document processed successfully</div>
                 <div style={{ color: "var(--text2)" }}>
-                  Format: {result.format_detected} | Health: {result.party_health?.score || 0}%
+                  Format detected: {result.format_detected} | Party health: {result.party_health?.score || 0}%
                 </div>
-                {result.agent_summary && (
-                  <div style={{ color: "var(--text2)", marginTop: 4 }}>{result.agent_summary}</div>
-                )}
+                {result.agent_summary && <div style={{ color: "var(--text2)", marginTop: 4, fontSize: 11 }}>
+                  {result.agent_summary}</div>}
               </div>
-            ) : (
-              <div>Error: {result.error || "Unknown error"}</div>
-            )}
+            ) : <div>Error: {result.error}</div>}
           </div>
         )}
-
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
           <button className="btn btn-ghost" onClick={onClose}>Close</button>
           <button className="btn btn-primary" onClick={submit} disabled={loading}>
-            {loading ? "Processing..." : "Upload & Extract"}
-          </button>
+            {loading ? "Processing..." : "Upload & Extract"}</button>
         </div>
       </div>
     </div>
@@ -631,142 +551,83 @@ function UploadTextModal({ onClose, caseId, partyId, partyName, onUploaded }) {
 }
 
 /* ── Landing Page ───────────────────────────────────────────────── */
-function LandingPage({ dispatch, cases }) {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+function LandingPage({ state, dispatch }) {
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
-    fetch("/api/cases").then(r => r.json()).then(data => {
-      if (Array.isArray(data)) dispatch({ type: "SET_CASES", payload: data });
+    // Check server health + load cases
+    fetch("/api/health").then(r => r.json()).then(d => {
+      dispatch({ type: "DIAG", v: { server: "ok", gemini: d.gemini_api } });
+    }).catch(() => dispatch({ type: "DIAG", v: { server: "down" } }));
+
+    fetch("/api/cases").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) dispatch({ type: "SET_CASES", v: d });
     }).catch(() => {});
   }, []);
 
   const onCreated = async (data) => {
-    setShowCreateModal(false);
-    // Fetch full case details
+    setShowCreate(false);
     try {
       const r = await fetch(`/api/cases/${data.case_id}`);
-      const fullCase = await r.json();
-      dispatch({ type: "SET_CASE", payload: fullCase });
-    } catch {
-      dispatch({ type: "SET_CASE", payload: data });
-    }
+      dispatch({ type: "SET_CASE", v: await r.json() });
+    } catch { dispatch({ type: "SET_CASE", v: data }); }
   };
 
-  const resumeCase = async (caseId) => {
-    try {
-      const r = await fetch(`/api/cases/${caseId}`);
-      const fullCase = await r.json();
-      dispatch({ type: "SET_CASE", payload: fullCase });
-    } catch {}
+  const resume = async (id) => {
+    try { dispatch({ type: "SET_CASE", v: await (await fetch(`/api/cases/${id}`)).json() }); }
+    catch {}
   };
 
   return (
-    <div className="landing-bg" style={{
-      height: "100vh", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", position: "relative",
-    }}>
-      {/* Hero */}
-      <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 60 }}>
-        <h1 style={{
-          fontSize: 32, fontWeight: 700, letterSpacing: 6,
-          color: "var(--accent)", marginBottom: 16,
-          textShadow: "0 0 30px rgba(42,191,172,0.2)",
-        }}>CONCORDIA</h1>
-        <p style={{
-          fontSize: 13, color: "var(--text2)", maxWidth: 460,
-          lineHeight: 1.6, margin: "0 auto",
-        }}>
-          When the picture is complete, the mediator becomes a bridge-builder.
-        </p>
-        <p style={{
-          fontSize: 11, color: "var(--muted)", marginTop: 8,
-        }}>
-          AI-powered conflict mediation with live knowledge graph
-        </p>
+    <div className="landing-bg" style={{ flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", position: "relative" }}>
+      <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 48 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 6, color: "var(--accent)",
+          marginBottom: 12, textShadow: "0 0 30px rgba(42,191,172,0.2)" }}>CONCORDIA</h1>
+        <p style={{ fontSize: 13, color: "var(--text2)", maxWidth: 460, lineHeight: 1.6, margin: "0 auto" }}>
+          When the picture is complete, the mediator becomes a bridge-builder.</p>
+        <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
+          AI-powered conflict mediation with live knowledge graph</p>
       </div>
 
-      {/* Action Buttons */}
-      <div style={{
-        display: "flex", gap: 16, animation: "fadeInUp 1s ease",
-      }}>
-        <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}
-          style={{ padding: "14px 32px", fontSize: 14 }}>
-          Start New Mediation
-        </button>
+      <div style={{ display: "flex", gap: 16, animation: "fadeInUp 1s ease" }}>
+        <button className="btn btn-primary" onClick={() => setShowCreate(true)}
+          style={{ padding: "14px 32px", fontSize: 14 }}>Start New Mediation</button>
+        <button className="btn btn-secondary" onClick={() => dispatch({ type: "TOGGLE_HELP" })}
+          style={{ padding: "14px 24px", fontSize: 13 }}>How It Works</button>
       </div>
 
-      {/* Active Cases */}
-      {cases.length > 0 && (
-        <div style={{
-          marginTop: 48, animation: "fadeInUp 1.2s ease",
-          width: "100%", maxWidth: 600, padding: "0 20px",
-        }}>
-          <h3 style={{
-            fontSize: 10, fontWeight: 600, letterSpacing: 1.5,
-            color: "var(--muted)", textTransform: "uppercase",
-            marginBottom: 12,
-          }}>Active Cases</h3>
-          {cases.map(c => (
-            <div key={c.case_id} onClick={() => resumeCase(c.case_id)}
-              style={{
-                padding: "12px 16px", background: "var(--panel)",
-                border: "1px solid var(--border)", borderRadius: "var(--radius)",
-                marginBottom: 8, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 12,
-                transition: "all var(--transition)",
-              }}
+      {/* Active cases */}
+      {state.cases.length > 0 && (
+        <div style={{ marginTop: 40, animation: "fadeInUp 1.2s ease", width: "100%", maxWidth: 560, padding: "0 20px" }}>
+          <h3 style={{ ...SH, marginBottom: 12 }}>Active Cases</h3>
+          {state.cases.map(c => (
+            <div key={c.case_id} onClick={() => resume(c.case_id)}
+              style={{ padding: "12px 16px", background: "var(--panel)", border: "1px solid var(--border)",
+                borderRadius: "var(--radius)", marginBottom: 8, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 12, transition: "all var(--transition)" }}
               onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent-dim)"}
               onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-                  {c.title || "Untitled Case"}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{c.title || "Untitled Case"}</div>
                 <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                  {Object.values(c.parties || {}).map(p => p.display_name).join(" vs ")}
-                </div>
+                  {Object.values(c.parties || {}).map(p => p.display_name).join(" vs ")}</div>
               </div>
               <PhaseBadge phase={c.phase} />
-              <span style={{ fontSize: 11, color: "var(--text2)" }}>
-                {c.graph_health?.score || 0}%
-              </span>
+              <span style={{ fontSize: 11, color: "var(--text2)" }}>{c.graph_health?.score || 0}%</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Pulse ring decoration */}
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)", pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          width: 300, height: 300, borderRadius: "50%",
-          border: "1px solid rgba(42,191,172,0.08)",
-          animation: "pulseRing 4s ease-out infinite",
-        }} />
+      {/* Decorative pulse ring */}
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+        pointerEvents: "none", zIndex: 0 }}>
+        <div style={{ width: 300, height: 300, borderRadius: "50%",
+          border: "1px solid rgba(42,191,172,0.08)", animation: "pulseRing 4s ease-out infinite" }} />
       </div>
 
-      {showCreateModal && (
-        <CreateCaseModal onClose={() => setShowCreateModal(false)} onCreated={onCreated} />
-      )}
-    </div>
-  );
-}
-
-/* ── Tool Feed Item ─────────────────────────────────────────────── */
-function ToolEntry({ tool, args }) {
-  const color = COLORS[tool.replace("add_", "")] || "var(--accent-dim)";
-  const argStr = Object.entries(args || {})
-    .filter(([k]) => ["name","content","description","case_title"].includes(k))
-    .map(([, v]) => String(v).slice(0, 35))
-    .join(", ");
-  return (
-    <div style={{
-      padding: "2px 0", whiteSpace: "nowrap", overflow: "hidden",
-      textOverflow: "ellipsis", fontSize: 10, color: "var(--muted)",
-    }}>
-      <span style={{ color }}>&#x25C6; {tool}</span>
-      {argStr && <span style={{ marginLeft: 4 }}>{argStr}</span>}
+      {showCreate && <CreateCaseModal onClose={() => setShowCreate(false)} onCreated={onCreated} />}
     </div>
   );
 }
@@ -775,691 +636,490 @@ function ToolEntry({ tool, args }) {
 function ChatPanel({ state, dispatch, wsRef }) {
   const [text, setText] = useState("");
   const [showUpload, setShowUpload] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const audioRef = useRef({ context: null, stream: null, processor: null, recording: false });
   const [recording, setRecording] = useState(false);
+  const endRef = useRef(null);
+  const audioRef = useRef({});
 
-  const { currentCase, activePartyId, messages } = state;
-  const parties = currentCase?.parties || {};
-  const partyIds = Object.keys(parties);
-  const partyMessages = messages[activePartyId] || [];
-  const activeParty = parties[activePartyId];
+  const { currentCase: cc, activePartyId: apid, messages, diagnostics } = state;
+  const parties = cc?.parties || {};
+  const pids = Object.keys(parties);
+  const msgs = messages[apid] || [];
+  const ap = parties[apid];
+  const ph = state.partyHealth[apid];
+  const wsState = diagnostics.ws;
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [partyMessages.length]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
 
-  const sendMessage = () => {
-    const msg = text.trim();
-    if (!msg || !wsRef.current?.[activePartyId]) return;
-    const ws = wsRef.current[activePartyId];
-    if (ws.readyState !== WebSocket.OPEN) return;
-    dispatch({ type: "ADD_MESSAGE", payload: {
-      partyId: activePartyId,
-      message: { type: "user", content: msg },
-    }});
-    ws.send(JSON.stringify({ type: "text", content: msg }));
+  const send = () => {
+    const m = text.trim(); if (!m) return;
+    const ws = wsRef.current?.[apid];
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      dispatch({ type: "ADD_MSG", pid: apid, msg: { type: "system",
+        content: "Not connected. Waiting for WebSocket..." } });
+      return;
+    }
+    dispatch({ type: "ADD_MSG", pid: apid, msg: { type: "user", content: m } });
+    ws.send(JSON.stringify({ type: "text", content: m }));
     setText("");
   };
 
-  const startAudio = async () => {
+  const toggleMic = async () => {
+    if (recording) {
+      const a = audioRef.current;
+      if (a.proc) a.proc.disconnect();
+      if (a.stream) a.stream.getTracks().forEach(t => t.stop());
+      if (a.ctx) a.ctx.close();
+      audioRef.current = {};
+      setRecording(false);
+      return;
+    }
     try {
       const ctx = new AudioContext({ sampleRate: 16000 });
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1 },
-      });
-      const source = ctx.createMediaStreamSource(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+      const src = ctx.createMediaStreamSource(stream);
       const proc = ctx.createScriptProcessor(4096, 1, 1);
       proc.onaudioprocess = (e) => {
-        const ws = wsRef.current?.[activePartyId];
+        const ws = wsRef.current?.[apid];
         if (ws && ws.readyState === WebSocket.OPEN) {
-          const f32 = e.inputBuffer.getChannelData(0);
-          const i16 = new Int16Array(f32.length);
-          for (let i = 0; i < f32.length; i++) {
-            i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
-          }
-          ws.send(i16.buffer);
+          const f = e.inputBuffer.getChannelData(0);
+          const b = new Int16Array(f.length);
+          for (let i = 0; i < f.length; i++) b[i] = Math.max(-32768, Math.min(32767, f[i] * 32768));
+          ws.send(b.buffer);
         }
       };
-      source.connect(proc);
-      proc.connect(ctx.destination);
-      audioRef.current = { context: ctx, stream, processor: proc, recording: true };
+      src.connect(proc); proc.connect(ctx.destination);
+      audioRef.current = { ctx, stream, proc };
       setRecording(true);
     } catch {
-      dispatch({ type: "ADD_MESSAGE", payload: {
-        partyId: activePartyId,
-        message: { type: "system", content: "Microphone access denied." },
-      }});
+      dispatch({ type: "ADD_MSG", pid: apid, msg: { type: "system", content: "Microphone access denied." } });
     }
   };
 
-  const stopAudio = () => {
-    const a = audioRef.current;
-    if (a.processor) a.processor.disconnect();
-    if (a.stream) a.stream.getTracks().forEach(t => t.stop());
-    if (a.context) a.context.close();
-    audioRef.current = { context: null, stream: null, processor: null, recording: false };
-    setRecording(false);
-  };
-
-  const toggleMic = () => recording ? stopAudio() : startAudio();
-
-  // Keyboard shortcuts
   useEffect(() => {
-    const handler = (e) => {
+    const h = (e) => {
       if (e.key === "Escape" && showUpload) { setShowUpload(false); return; }
       if (e.ctrlKey && e.key === "m") { e.preventDefault(); toggleMic(); }
       if (e.ctrlKey && e.key >= "1" && e.key <= "4") {
         e.preventDefault();
-        const idx = parseInt(e.key) - 1;
-        if (partyIds[idx]) dispatch({ type: "SET_ACTIVE_PARTY", payload: partyIds[idx] });
+        if (pids[parseInt(e.key)-1]) dispatch({ type: "SET_ACTIVE_PARTY", v: pids[parseInt(e.key)-1] });
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [showUpload, recording, partyIds]);
-
-  // Per-party health
-  const partyHealth = state.partyHealth[activePartyId];
-  const partyScore = partyHealth?.score || 0;
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [showUpload, recording, pids.join(",")]);
 
   return (
-    <div style={{
-      width: 400, minWidth: 320, display: "flex", flexDirection: "column",
-      borderRight: "1px solid var(--border)", background: "var(--panel)",
-    }}>
-      {/* Party Tabs */}
-      <div style={{
-        display: "flex", borderBottom: "1px solid var(--border)",
-        background: "var(--bg)", flexShrink: 0,
-      }}>
-        {partyIds.map((pid, i) => {
+    <div style={{ width: 400, minWidth: 300, display: "flex", flexDirection: "column",
+      borderRight: "1px solid var(--border)", background: "var(--panel)" }}>
+      {/* Party tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "var(--bg)", flexShrink: 0 }}>
+        {pids.map(pid => {
           const p = parties[pid];
           return (
-            <div key={pid} onClick={() => dispatch({ type: "SET_ACTIVE_PARTY", payload: pid })}
-              style={{
-                flex: 1, padding: "10px 12px", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
-                borderBottom: pid === activePartyId ? "2px solid var(--accent)" : "2px solid transparent",
-                background: pid === activePartyId ? "var(--panel)" : "transparent",
-                transition: "all var(--transition)",
-              }}>
+            <div key={pid} onClick={() => dispatch({ type: "SET_ACTIVE_PARTY", v: pid })}
+              style={{ flex: 1, padding: "10px 12px", cursor: "pointer", display: "flex",
+                alignItems: "center", gap: 6, justifyContent: "center",
+                borderBottom: pid === apid ? "2px solid var(--accent)" : "2px solid transparent",
+                background: pid === apid ? "var(--panel)" : "transparent",
+                transition: "all var(--transition)" }}>
               <StatusDot status={p.status} />
-              <span style={{
-                fontSize: 12, fontWeight: pid === activePartyId ? 600 : 400,
-                color: pid === activePartyId ? "var(--text)" : "var(--text2)",
-              }}>{p.display_name}</span>
+              <span style={{ fontSize: 12, fontWeight: pid === apid ? 600 : 400,
+                color: pid === apid ? "var(--text)" : "var(--text2)" }}>{p.display_name}</span>
             </div>
           );
         })}
       </div>
 
-      {/* Party Info Card */}
-      {activeParty && (
-        <div style={{
-          padding: "10px 14px", borderBottom: "1px solid var(--border)",
-          display: "flex", alignItems: "center", gap: 12, flexShrink: 0,
-        }}>
-          <CircularProgress value={partyScore} size={44} stroke={4} />
+      {/* Party info */}
+      {ap && (
+        <div style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)",
+          display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <CircularProgress value={ph?.score || 0} size={40} stroke={3} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{activeParty.display_name}</div>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{ap.display_name}</div>
             <div style={{ fontSize: 10, color: "var(--muted)" }}>
-              {activeParty.status === "complete" ? "Intake complete" :
-               activeParty.status === "active" ? "Providing input" : "Waiting"}
+              {ap.status === "complete" ? "Intake complete" : ap.status === "active" ? "Providing input" : "Waiting"}
             </div>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => setShowUpload(true)}
-            style={{ fontSize: 10 }}>Upload Doc</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowUpload(true)}>Upload</button>
+          {/* WS indicator */}
+          <span style={{ width: 8, height: 8, borderRadius: "50%",
+            background: wsState === "connected" ? "var(--green)" : "var(--red)",
+            transition: "background 0.3s" }}
+            title={wsState === "connected" ? "WebSocket connected" : "WebSocket disconnected"} />
         </div>
       )}
 
       {/* Messages */}
-      <div style={{
-        flex: 1, overflowY: "auto", padding: 12,
-        display: "flex", flexDirection: "column", gap: 6,
-      }}>
-        {partyMessages.length === 0 && (
-          <div style={{
-            textAlign: "center", color: "var(--muted)", fontSize: 12,
-            marginTop: 40, lineHeight: 1.6,
-          }}>
-            Welcome to CONCORDIA.<br />
-            Tell me what's going on.
+      <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+        {msgs.length === 0 && (
+          <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 40, lineHeight: 1.6 }}>
+            Welcome to CONCORDIA.<br />Tell me what's going on.
           </div>
         )}
-        {partyMessages.map((msg, i) => {
-          if (msg.type === "user") return (
-            <div key={i} style={{
-              alignSelf: "flex-end", maxWidth: "85%",
-              padding: "8px 12px", borderRadius: "12px 12px 4px 12px",
-              background: "#1a2540", border: "1px solid #243050",
-              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word",
-              animation: "fadeIn 0.2s ease",
-            }}>{msg.content}</div>
+        {msgs.map((m, i) => {
+          if (m.type === "user") return (
+            <div key={i} style={{ alignSelf: "flex-end", maxWidth: "85%", padding: "8px 12px",
+              borderRadius: "12px 12px 4px 12px", background: "#1a2540", border: "1px solid #243050",
+              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word", animation: "fadeIn 0.2s" }}>{m.content}</div>
           );
-          if (msg.type === "agent") return (
-            <div key={i} style={{
-              alignSelf: "flex-start", maxWidth: "85%",
-              padding: "8px 12px", borderRadius: "12px 12px 12px 4px",
-              background: "#12121e", border: "1px solid var(--border)",
-              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word",
-              animation: "fadeIn 0.2s ease",
-            }}>
-              <div style={{
-                fontSize: 9, color: "var(--accent)", marginBottom: 3,
-                textTransform: "uppercase", letterSpacing: 1,
-              }}>{msg.author || "concordia"}</div>
-              {msg.content}
+          if (m.type === "agent") return (
+            <div key={i} style={{ alignSelf: "flex-start", maxWidth: "85%", padding: "8px 12px",
+              borderRadius: "12px 12px 12px 4px", background: "#12121e", border: "1px solid var(--border)",
+              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word", animation: "fadeIn 0.2s" }}>
+              <div style={{ fontSize: 9, color: "var(--accent)", marginBottom: 3,
+                textTransform: "uppercase", letterSpacing: 1 }}>{m.author || "concordia"}</div>
+              {m.content}
             </div>
           );
-          if (msg.type === "tool") return (
-            <ToolEntry key={i} tool={msg.tool} args={msg.args} />
+          if (m.type === "tool") {
+            const c = COLORS[m.tool.replace("add_", "")] || "var(--accent-dim)";
+            const a = Object.entries(m.args || {}).filter(([k]) =>
+              ["name","content","description","case_title"].includes(k))
+              .map(([,v]) => String(v).slice(0, 35)).join(", ");
+            return (
+              <div key={i} style={{ fontSize: 10, color: "var(--muted)", padding: "1px 0",
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ color: c }}>{TYPE_ICONS[m.tool.replace("add_","")] || "\u25C6"} {m.tool}</span>
+                {a && <span style={{ marginLeft: 4 }}>{a}</span>}
+              </div>
+            );
+          }
+          if (m.type === "system") return (
+            <div key={i} style={{ alignSelf: "center", fontStyle: "italic", fontSize: 11, textAlign: "center",
+              padding: "4px 0", color: m.content.includes("comprehensive") ? "var(--green)" : "var(--muted)" }}>
+              {m.content}</div>
           );
-          if (msg.type === "system") return (
-            <div key={i} style={{
-              alignSelf: "center", fontStyle: "italic",
-              color: msg.content.includes("comprehensive") ? "var(--green)" : "var(--muted)",
-              fontSize: 11, textAlign: "center", padding: "4px 0",
-            }}>{msg.content}</div>
-          );
-          if (msg.type === "error") return (
-            <div key={i} style={{
-              alignSelf: "center", color: "var(--red)",
-              fontSize: 11, textAlign: "center", padding: "4px 0",
-            }}>{msg.content}</div>
+          if (m.type === "error") return (
+            <div key={i} style={{ alignSelf: "center", fontSize: 11, textAlign: "center",
+              padding: "6px 10px", color: "var(--red)", background: "rgba(232,93,93,0.08)",
+              borderRadius: "var(--radius)", border: "1px solid rgba(232,93,93,0.2)" }}>{m.content}</div>
           );
           return null;
         })}
-        <div ref={messagesEndRef} />
+        <div ref={endRef} />
       </div>
 
-      {/* Input Bar */}
-      <div style={{
-        display: "flex", padding: "10px 12px", gap: 8,
-        borderTop: "1px solid var(--border)", background: "var(--panel)", flexShrink: 0,
-      }}>
-        <input ref={inputRef} type="text" value={text} onChange={e => setText(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
-          placeholder="Tell me what's going on..."
-          style={{
-            flex: 1, background: "#0d0d18", border: "1px solid var(--border)",
-            color: "var(--text)", padding: "8px 12px", borderRadius: 6,
-            fontFamily: "var(--font)", fontSize: 13, outline: "none",
-          }} />
-        <button className="btn btn-primary btn-sm" onClick={sendMessage}>Send</button>
-        <button onClick={toggleMic}
-          style={{
-            border: recording ? "none" : "1.5px solid var(--red)",
-            borderRadius: 6, width: 38, height: 36, display: "flex",
-            alignItems: "center", justifyContent: "center", cursor: "pointer",
-            background: recording ? "var(--red)" : "transparent",
-            color: recording ? "#fff" : "var(--red)",
-            fontSize: 14, fontFamily: "var(--font)",
-            animation: recording ? "pulse 1.2s infinite" : "none",
-            transition: "all 0.2s",
-          }}>&#x1F3A4;</button>
+      {/* Input */}
+      <div style={{ display: "flex", padding: "10px 12px", gap: 8,
+        borderTop: "1px solid var(--border)", background: "var(--panel)", flexShrink: 0 }}>
+        <input type="text" value={text} onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder={wsState === "connected" ? "Tell me what's going on..." : "Connecting..."}
+          style={{ flex: 1, background: "#0d0d18", border: "1px solid var(--border)", color: "var(--text)",
+            padding: "8px 12px", borderRadius: 6, fontFamily: "var(--font)", fontSize: 13, outline: "none" }} />
+        <button className="btn btn-primary btn-sm" onClick={send}
+          disabled={wsState !== "connected"}>Send</button>
+        <button onClick={toggleMic} style={{
+          border: recording ? "none" : "1.5px solid var(--red)", borderRadius: 6, width: 36, height: 34,
+          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+          background: recording ? "var(--red)" : "transparent",
+          color: recording ? "#fff" : "var(--red)", fontSize: 14,
+          animation: recording ? "pulse 1.2s infinite" : "none", transition: "all 0.2s",
+        }}>&#x1F3A4;</button>
       </div>
 
-      {showUpload && currentCase && activePartyId && (
-        <UploadTextModal
-          onClose={() => setShowUpload(false)}
-          caseId={currentCase.case_id}
-          partyId={activePartyId}
-          partyName={activeParty?.display_name || ""}
-          onUploaded={(data) => {
-            if (data.health) dispatch({ type: "UPDATE_HEALTH", payload: data.health });
-            if (data.party_health) dispatch({ type: "UPDATE_PARTY_HEALTH", payload: { partyId: activePartyId, health: data.party_health }});
-            // Re-fetch graph
-            fetch(`/api/cases/${currentCase.case_id}`)
-              .then(r => r.json())
-              .then(d => {
-                if (d.graph) dispatch({ type: "UPDATE_GRAPH", payload: d.graph });
-              }).catch(() => {});
-          }}
-        />
-      )}
+      {showUpload && cc && apid && <UploadModal onClose={() => setShowUpload(false)}
+        caseId={cc.case_id} partyId={apid} partyName={ap?.display_name || ""}
+        onDone={d => {
+          if (d.health) dispatch({ type: "UPDATE_HEALTH", v: d.health });
+          if (d.party_health) dispatch({ type: "UPDATE_PARTY_HEALTH", pid: apid, v: d.party_health });
+          fetch(`/api/cases/${cc.case_id}`).then(r => r.json()).then(c => {
+            if (c.graph) dispatch({ type: "UPDATE_GRAPH", v: c.graph });
+          }).catch(() => {});
+        }} />}
     </div>
   );
 }
 
-/* ── D3 Force Graph ─────────────────────────────────────────────── */
+/* ── D3 Graph Panel ─────────────────────────────────────────────── */
 function GraphPanel({ state, dispatch }) {
-  const containerRef = useRef(null);
+  const cRef = useRef(null);
   const svgRef = useRef(null);
   const simRef = useRef(null);
   const nodesRef = useRef([]);
-  const linksRef = useRef([]);
   const gRef = useRef(null);
-  const initialized = useRef(false);
+  const initd = useRef(false);
 
-  const { graphData, filterType, currentCase } = state;
-  const parties = currentCase?.parties || {};
-  const partyIds = Object.keys(parties);
+  const { graphData, filterType, currentCase: cc } = state;
+  const parties = cc?.parties || {};
+  const pids = Object.keys(parties);
 
-  // Initialize D3
   useEffect(() => {
-    if (initialized.current || !svgRef.current) return;
-    initialized.current = true;
-
+    if (initd.current || !svgRef.current) return;
+    initd.current = true;
     const svg = d3.select(svgRef.current);
-    const container = containerRef.current;
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-
+    const w = cRef.current.clientWidth, h = cRef.current.clientHeight;
     svg.attr("viewBox", [0, 0, w, h]);
 
-    // Defs: arrow marker + glow filters
     const defs = svg.append("defs");
+    defs.append("marker").attr("id","arrow").attr("viewBox","0 -4 8 8")
+      .attr("refX",24).attr("refY",0).attr("markerWidth",5).attr("markerHeight",5)
+      .attr("orient","auto").append("path").attr("d","M0,-3L8,0L0,3").attr("fill","#2a2a3e");
 
-    defs.append("marker")
-      .attr("id", "arrow")
-      .attr("viewBox", "0 -4 8 8")
-      .attr("refX", 24).attr("refY", 0)
-      .attr("markerWidth", 5).attr("markerHeight", 5)
-      .attr("orient", "auto")
-      .append("path")
-      .attr("d", "M0,-3L8,0L0,3")
-      .attr("fill", "#2a2a3e");
-
-    // Party glow filters
-    PARTY_GLOW_COLORS.forEach((color, i) => {
-      const filter = defs.append("filter").attr("id", `glow-${i}`);
-      filter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "blur");
-      filter.append("feFlood").attr("flood-color", color).attr("result", "color");
-      filter.append("feComposite").attr("in", "color").attr("in2", "blur").attr("operator", "in").attr("result", "glow");
-      const merge = filter.append("feMerge");
-      merge.append("feMergeNode").attr("in", "glow");
-      merge.append("feMergeNode").attr("in", "SourceGraphic");
+    PARTY_GLOW.forEach((c, i) => {
+      const f = defs.append("filter").attr("id",`glow-${i}`);
+      f.append("feGaussianBlur").attr("stdDeviation","3").attr("result","b");
+      f.append("feFlood").attr("flood-color",c).attr("result","c");
+      f.append("feComposite").attr("in","c").attr("in2","b").attr("operator","in").attr("result","g");
+      const m = f.append("feMerge"); m.append("feMergeNode").attr("in","g"); m.append("feMergeNode").attr("in","SourceGraphic");
     });
 
-    const g = svg.append("g").attr("class", "graph-root");
-    gRef.current = g;
-
-    // Zoom
-    svg.call(d3.zoom().scaleExtent([0.2, 4])
-      .on("zoom", (e) => g.attr("transform", e.transform)));
-
-    g.append("g").attr("class", "links");
-    g.append("g").attr("class", "nodes");
-    g.append("g").attr("class", "labels");
+    const g = svg.append("g"); gRef.current = g;
+    svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom", e => g.attr("transform", e.transform)));
+    g.append("g").attr("class","links");
+    g.append("g").attr("class","nodes");
+    g.append("g").attr("class","labels");
 
     simRef.current = d3.forceSimulation()
       .force("link", d3.forceLink().id(d => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-280))
-      .force("center", d3.forceCenter(w / 2, h / 2))
+      .force("center", d3.forceCenter(w/2, h/2))
       .force("collision", d3.forceCollide(32))
       .on("tick", () => {
         g.select(".links").selectAll("line")
-          .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-        g.select(".nodes").selectAll("circle")
-          .attr("cx", d => d.x).attr("cy", d => d.y);
-        g.select(".labels").selectAll("text")
-          .attr("x", d => d.x).attr("y", d => d.y + (d.r || 12) + 14);
+          .attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
+          .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+        g.select(".nodes").selectAll("circle").attr("cx",d=>d.x).attr("cy",d=>d.y);
+        g.select(".labels").selectAll("text").attr("x",d=>d.x).attr("y",d=>d.y+(d.r||12)+14);
       });
     simRef.current.stop();
 
-    // Resize handler
-    const onResize = () => {
-      const nw = container.clientWidth;
-      const nh = container.clientHeight;
-      svg.attr("viewBox", [0, 0, nw, nh]);
-      simRef.current.force("center", d3.forceCenter(nw / 2, nh / 2));
-      simRef.current.alpha(0.3).restart();
+    const onR = () => {
+      const nw = cRef.current.clientWidth, nh = cRef.current.clientHeight;
+      svg.attr("viewBox",[0,0,nw,nh]);
+      simRef.current.force("center",d3.forceCenter(nw/2,nh/2)).alpha(0.3).restart();
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onR);
   }, []);
 
-  // Update graph when data changes
   useEffect(() => {
     if (!graphData || !gRef.current || !simRef.current) return;
+    const g = gRef.current, sim = simRef.current;
 
-    const g = gRef.current;
-    const sim = simRef.current;
-
-    // Build nodes
     let nodes = [
-      ...(graphData.actors || []).map(n => ({ ...n, type: "actor", label: n.name, r: 22 })),
-      ...(graphData.claims || []).map(n => ({ ...n, type: "claim", label: (n.content || "").slice(0, 28), r: 13 })),
-      ...(graphData.interests || []).map(n => ({ ...n, type: "interest", label: (n.description || "").slice(0, 25), r: 12 })),
-      ...(graphData.constraints || []).map(n => ({ ...n, type: "constraint", label: (n.description || "").slice(0, 25), r: 12 })),
-      ...(graphData.leverages || []).map(n => ({ ...n, type: "leverage", label: (n.description || "").slice(0, 25), r: 13 })),
-      ...(graphData.commitments || []).map(n => ({ ...n, type: "commitment", label: (n.description || "").slice(0, 25), r: 11 })),
-      ...(graphData.events || []).map(n => ({ ...n, type: "event", label: (n.description || "").slice(0, 25), r: 12 })),
-      ...(graphData.narratives || []).map(n => ({ ...n, type: "narrative", label: (n.description || "").slice(0, 25), r: 12 })),
+      ...(graphData.actors||[]).map(n => ({...n, type:"actor", label:n.name, r:22})),
+      ...(graphData.claims||[]).map(n => ({...n, type:"claim", label:(n.content||"").slice(0,28), r:13})),
+      ...(graphData.interests||[]).map(n => ({...n, type:"interest", label:(n.description||"").slice(0,25), r:12})),
+      ...(graphData.constraints||[]).map(n => ({...n, type:"constraint", label:(n.description||"").slice(0,25), r:12})),
+      ...(graphData.leverages||[]).map(n => ({...n, type:"leverage", label:(n.description||"").slice(0,25), r:13})),
+      ...(graphData.commitments||[]).map(n => ({...n, type:"commitment", label:(n.description||"").slice(0,25), r:11})),
+      ...(graphData.events||[]).map(n => ({...n, type:"event", label:(n.description||"").slice(0,25), r:12})),
+      ...(graphData.narratives||[]).map(n => ({...n, type:"narrative", label:(n.description||"").slice(0,25), r:12})),
     ];
+    if (filterType) nodes = nodes.filter(n => n.type === filterType || n.type === "actor");
 
-    // Filter
-    if (filterType) {
-      const actorIds = new Set(nodes.filter(n => n.type === "actor").map(n => n.id));
-      nodes = nodes.filter(n => n.type === filterType || n.type === "actor");
-    }
+    const nids = new Set(nodes.map(n => n.id));
+    const links = (graphData.edges||[])
+      .filter(e => nids.has(e.source_id) && nids.has(e.target_id))
+      .map(e => ({ source: e.source_id, target: e.target_id, rel: e.relationship }));
 
-    const nodeIds = new Set(nodes.map(n => n.id));
-    const links = (graphData.edges || [])
-      .filter(e => nodeIds.has(e.source_id || (e.source && e.source.id) || e.source)
-                 && nodeIds.has(e.target_id || (e.target && e.target.id) || e.target))
-      .map(e => ({
-        source: e.source_id || e.source,
-        target: e.target_id || e.target,
-        rel: e.relationship
-      }));
-
-    // Preserve positions
-    const oldMap = {};
-    nodesRef.current.forEach(n => { oldMap[n.id] = { x: n.x, y: n.y, vx: n.vx, vy: n.vy }; });
-    nodes.forEach(n => {
-      if (oldMap[n.id]) { n.x = oldMap[n.id].x; n.y = oldMap[n.id].y; n.vx = oldMap[n.id].vx; n.vy = oldMap[n.id].vy; }
-    });
+    const old = {}; nodesRef.current.forEach(n => { old[n.id] = {x:n.x,y:n.y,vx:n.vx,vy:n.vy}; });
+    nodes.forEach(n => { if (old[n.id]) Object.assign(n, old[n.id]); });
     nodesRef.current = nodes;
-    linksRef.current = links;
 
-    // Party index lookup
-    const partyIndex = {};
-    partyIds.forEach((pid, i) => { partyIndex[pid] = i; });
+    const pi = {}; pids.forEach((p,i) => pi[p]=i);
 
-    // Links
-    g.select(".links").selectAll("line")
-      .data(links, d => `${typeof d.source === 'object' ? d.source.id : d.source}-${typeof d.target === 'object' ? d.target.id : d.target}-${d.rel}`)
-      .join(
-        enter => enter.append("line")
-          .attr("stroke", "#2a2a3e").attr("stroke-width", 1.2)
-          .attr("marker-end", "url(#arrow)")
-          .attr("stroke-dasharray", "4 3")
-          .style("animation", "dashFlow 1s linear infinite")
-          .attr("opacity", 0)
-          .transition().duration(400).attr("opacity", 0.6),
-        update => update,
-        exit => exit.transition().duration(300).attr("opacity", 0).remove()
-      );
-
-    // Nodes
     const drag = d3.drag()
-      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on("end", (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; });
+      .on("start",(e,d) => { if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on("drag",(e,d) => { d.fx=e.x; d.fy=e.y; })
+      .on("end",(e,d) => { if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; });
+
+    g.select(".links").selectAll("line")
+      .data(links, d => `${typeof d.source==='object'?d.source.id:d.source}-${typeof d.target==='object'?d.target.id:d.target}-${d.rel}`)
+      .join(
+        en => en.append("line").attr("stroke","#2a2a3e").attr("stroke-width",1.2)
+          .attr("marker-end","url(#arrow)").attr("stroke-dasharray","4 3")
+          .style("animation","dashFlow 1s linear infinite")
+          .attr("opacity",0).transition().duration(400).attr("opacity",0.6),
+        up => up, ex => ex.transition().duration(300).attr("opacity",0).remove()
+      );
 
     g.select(".nodes").selectAll("circle")
       .data(nodes, d => d.id)
       .join(
-        enter => enter.append("circle")
-          .attr("r", 0)
-          .attr("fill", d => COLORS[d.type] || "#5a6577")
-          .attr("stroke", d => COLORS[d.type] || "#5a6577")
-          .attr("stroke-width", d => d.type === "actor" ? 2.5 : 1.5)
-          .attr("fill-opacity", 0.2)
-          .attr("cursor", "pointer")
-          .attr("filter", d => {
-            const pi = partyIndex[d.contributed_by];
-            return pi !== undefined ? `url(#glow-${pi})` : null;
-          })
-          .on("click", (e, d) => {
-            dispatch({ type: "SELECT_NODE", payload: d });
-            // Highlight connected
-            const connectedIds = new Set([d.id]);
-            (graphData.edges || []).forEach(edge => {
-              if (edge.source_id === d.id) connectedIds.add(edge.target_id);
-              if (edge.target_id === d.id) connectedIds.add(edge.source_id);
+        en => en.append("circle").attr("r",0)
+          .attr("fill",d => COLORS[d.type]||"#5a6577")
+          .attr("stroke",d => COLORS[d.type]||"#5a6577")
+          .attr("stroke-width",d => d.type==="actor"?2.5:1.5)
+          .attr("fill-opacity",0.2).attr("cursor","pointer")
+          .attr("filter",d => { const p=pi[d.contributed_by]; return p!==undefined?`url(#glow-${p})`:null; })
+          .on("click",(e,d) => {
+            dispatch({ type: "SELECT_NODE", v: d });
+            const conn = new Set([d.id]);
+            (graphData.edges||[]).forEach(ed => {
+              if (ed.source_id===d.id) conn.add(ed.target_id);
+              if (ed.target_id===d.id) conn.add(ed.source_id);
             });
-            g.select(".nodes").selectAll("circle")
-              .attr("opacity", n => connectedIds.has(n.id) ? 1 : 0.15);
-            g.select(".links").selectAll("line")
-              .attr("opacity", l => {
-                const sid = typeof l.source === 'object' ? l.source.id : l.source;
-                const tid = typeof l.target === 'object' ? l.target.id : l.target;
-                return sid === d.id || tid === d.id ? 0.8 : 0.05;
-              });
-            g.select(".labels").selectAll("text")
-              .attr("opacity", n => connectedIds.has(n.id) ? 0.9 : 0.1);
+            g.select(".nodes").selectAll("circle").attr("opacity",n=>conn.has(n.id)?1:0.15);
+            g.select(".links").selectAll("line").attr("opacity",l=>{
+              const s=typeof l.source==='object'?l.source.id:l.source;
+              const t=typeof l.target==='object'?l.target.id:l.target;
+              return s===d.id||t===d.id?0.8:0.05;
+            });
+            g.select(".labels").selectAll("text").attr("opacity",n=>conn.has(n.id)?0.9:0.1);
           })
           .call(drag)
-          .transition().duration(600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
-          .attr("r", d => d.r),
-        update => update
-          .attr("fill", d => COLORS[d.type] || "#5a6577")
-          .attr("stroke", d => COLORS[d.type] || "#5a6577")
-          .attr("opacity", 1),
-        exit => exit.transition().duration(300).attr("r", 0).remove()
+          .transition().duration(600).ease(d3.easeElasticOut.amplitude(1).period(0.5)).attr("r",d=>d.r),
+        up => up.attr("fill",d=>COLORS[d.type]).attr("stroke",d=>COLORS[d.type]).attr("opacity",1),
+        ex => ex.transition().duration(300).attr("r",0).remove()
       );
 
-    // Labels
     g.select(".labels").selectAll("text")
       .data(nodes, d => d.id)
       .join(
-        enter => enter.append("text")
-          .attr("text-anchor", "middle")
-          .attr("font-size", d => d.type === "actor" ? "11px" : "9px")
-          .attr("font-weight", d => d.type === "actor" ? "600" : "400")
-          .attr("fill", d => COLORS[d.type] || "#5a6577")
-          .attr("fill-opacity", 0)
-          .attr("pointer-events", "none")
-          .text(d => {
-            const icon = TYPE_ICONS[d.type] || "";
-            return `${icon} ${(d.label || "").slice(0, 28)}`;
-          })
-          .transition().duration(500).attr("fill-opacity", 0.8),
-        update => update.text(d => {
-          const icon = TYPE_ICONS[d.type] || "";
-          return `${icon} ${(d.label || "").slice(0, 28)}`;
-        }).attr("opacity", 1),
-        exit => exit.transition().duration(300).attr("fill-opacity", 0).remove()
+        en => en.append("text").attr("text-anchor","middle")
+          .attr("font-size",d=>d.type==="actor"?"11px":"9px")
+          .attr("font-weight",d=>d.type==="actor"?"600":"400")
+          .attr("fill",d=>COLORS[d.type]).attr("fill-opacity",0).attr("pointer-events","none")
+          .text(d=>`${TYPE_ICONS[d.type]||""} ${(d.label||"").slice(0,28)}`)
+          .transition().duration(500).attr("fill-opacity",0.8),
+        up => up.text(d=>`${TYPE_ICONS[d.type]||""} ${(d.label||"").slice(0,28)}`).attr("opacity",1),
+        ex => ex.transition().duration(300).attr("fill-opacity",0).remove()
       );
 
-    // Update simulation
-    sim.nodes(nodes);
-    sim.force("link").links(links);
-    sim.alpha(0.5).restart();
-
+    sim.nodes(nodes); sim.force("link").links(links); sim.alpha(0.5).restart();
   }, [graphData, filterType]);
 
-  // Click on background to deselect
-  const handleBgClick = (e) => {
-    if (e.target === svgRef.current || e.target.tagName === 'svg') {
-      dispatch({ type: "SELECT_NODE", payload: null });
+  const handleBg = (e) => {
+    if (e.target === svgRef.current || e.target.tagName === "svg") {
+      dispatch({ type: "SELECT_NODE", v: null });
       if (gRef.current) {
-        gRef.current.select(".nodes").selectAll("circle").attr("opacity", 1);
-        gRef.current.select(".links").selectAll("line").attr("opacity", 0.6);
-        gRef.current.select(".labels").selectAll("text").attr("opacity", 0.8);
+        gRef.current.select(".nodes").selectAll("circle").attr("opacity",1);
+        gRef.current.select(".links").selectAll("line").attr("opacity",0.6);
+        gRef.current.select(".labels").selectAll("text").attr("opacity",0.8);
       }
     }
   };
 
-  const totalNodes = graphData ?
-    (graphData.actors||[]).length + (graphData.claims||[]).length +
-    (graphData.interests||[]).length + (graphData.constraints||[]).length +
-    (graphData.leverages||[]).length + (graphData.commitments||[]).length +
-    (graphData.events||[]).length + (graphData.narratives||[]).length : 0;
+  const total = graphData ? (graphData.actors||[]).length+(graphData.claims||[]).length+
+    (graphData.interests||[]).length+(graphData.constraints||[]).length+
+    (graphData.leverages||[]).length+(graphData.commitments||[]).length+
+    (graphData.events||[]).length+(graphData.narratives||[]).length : 0;
 
-  const phase = currentCase?.phase || graphData?.phase || "arrive";
-  const escalation = graphData?.escalation_level || "latent";
+  const phase = cc?.phase || graphData?.phase || "arrive";
+  const esc = graphData?.escalation_level || "latent";
 
   return (
-    <div ref={containerRef} style={{
-      flex: 1, position: "relative", background: "var(--bg)", overflow: "hidden",
-    }} onClick={handleBgClick}>
-      {/* Graph overlays */}
-      <div style={{
-        position: "absolute", top: 12, left: 14, zIndex: 10,
-        display: "flex", flexDirection: "column", gap: 6, pointerEvents: "none",
-      }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", pointerEvents: "auto" }}>
-          <span style={{
-            fontSize: 13, fontWeight: 700, letterSpacing: 3,
-            color: "var(--accent)", textShadow: "0 0 20px rgba(42,191,172,0.15)",
-          }}>CONCORDIA</span>
+    <div ref={cRef} style={{ flex:1, position:"relative", background:"var(--bg)", overflow:"hidden" }} onClick={handleBg}>
+      {/* Top overlay */}
+      <div style={{ position:"absolute", top:12, left:14, zIndex:10, display:"flex", flexDirection:"column",
+        gap:6, pointerEvents:"none" }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", pointerEvents:"auto" }}>
+          <span style={{ fontSize:13, fontWeight:700, letterSpacing:3, color:"var(--accent)",
+            textShadow:"0 0 20px rgba(42,191,172,0.15)" }}>CONCORDIA</span>
           <PhaseBadge phase={phase} />
-          {escalation !== "latent" && (
-            <span style={{
-              fontSize: 9, padding: "2px 8px", borderRadius: 8,
-              background: escalation === "crisis" || escalation === "destructive" ? "var(--red)" : "var(--gold)",
-              color: "#0a0a0f", fontWeight: 600, letterSpacing: 0.5,
-              textTransform: "uppercase",
-            }}>{escalation}</span>
-          )}
+          {esc !== "latent" && <span style={{ fontSize:9, padding:"2px 8px", borderRadius:8,
+            background: esc==="crisis"||esc==="destructive"?"var(--red)":"var(--gold)",
+            color:"#0a0a0f", fontWeight:600, textTransform:"uppercase" }}>{esc}</span>}
         </div>
-        {currentCase?.title && (
-          <span style={{ fontSize: 11, color: "var(--text2)" }}>
-            {currentCase.title}
-          </span>
-        )}
+        {cc?.title && <span style={{ fontSize:11, color:"var(--text2)" }}>{cc.title}</span>}
       </div>
 
       {/* Legend */}
-      <div style={{
-        position: "absolute", bottom: 12, left: 14, zIndex: 10,
-        display: "flex", gap: 12, flexWrap: "wrap", pointerEvents: "auto",
-      }}>
-        {Object.entries(COLORS).map(([type, color]) => (
-          <div key={type} onClick={() => dispatch({ type: "SET_FILTER", payload: type })}
-            style={{
-              display: "flex", alignItems: "center", gap: 4, cursor: "pointer",
-              opacity: filterType && filterType !== type ? 0.3 : 1,
-              transition: "opacity var(--transition)",
-            }}>
-            <span style={{
-              width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0,
-            }} />
-            <span style={{ fontSize: 9, color: "var(--text2)" }}>{TYPE_LABELS[type]}</span>
+      <div style={{ position:"absolute", bottom:12, left:14, zIndex:10, display:"flex", gap:12,
+        flexWrap:"wrap", pointerEvents:"auto" }}>
+        {Object.entries(COLORS).map(([t,c]) => (
+          <div key={t} onClick={() => dispatch({ type:"SET_FILTER", v:t })}
+            style={{ display:"flex", alignItems:"center", gap:4, cursor:"pointer",
+              opacity: filterType&&filterType!==t?0.3:1, transition:"opacity var(--transition)" }}>
+            <span style={{ width:7, height:7, borderRadius:"50%", background:c }} />
+            <span style={{ fontSize:9, color:"var(--text2)" }}>{TYPE_LABELS[t]}</span>
           </div>
         ))}
-        {filterType && (
-          <div onClick={() => dispatch({ type: "SET_FILTER", payload: null })}
-            style={{ fontSize: 9, color: "var(--accent)", cursor: "pointer" }}>Clear filter</div>
-        )}
+        {filterType && <div onClick={() => dispatch({ type:"SET_FILTER", v:null })}
+          style={{ fontSize:9, color:"var(--accent)", cursor:"pointer" }}>Clear</div>}
       </div>
 
       {/* Empty state */}
-      {totalNodes === 0 && (
-        <div style={{
-          position: "absolute", top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)", textAlign: "center",
-          color: "var(--muted)", pointerEvents: "none",
-        }}>
-          <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 16px" }}>
-            <div style={{
-              width: 80, height: 80, borderRadius: "50%",
-              border: "1px solid rgba(42,191,172,0.15)",
-              animation: "pulseRing 3s ease-out infinite",
-            }} />
+      {total === 0 && (
+        <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
+          textAlign:"center", color:"var(--muted)", pointerEvents:"none" }}>
+          <div style={{ position:"relative", width:80, height:80, margin:"0 auto 16px" }}>
+            <div style={{ width:80, height:80, borderRadius:"50%", border:"1px solid rgba(42,191,172,0.15)",
+              animation:"pulseRing 3s ease-out infinite" }} />
           </div>
-          <div style={{ fontSize: 13 }}>Start talking — the conflict map</div>
-          <div style={{ fontSize: 13 }}>will build in real time.</div>
+          <div style={{ fontSize:13, lineHeight:1.6 }}>Start talking — the conflict map<br />will build in real time.</div>
         </div>
       )}
 
-      <svg ref={svgRef} style={{ width: "100%", height: "100%", display: "block" }} />
+      <svg ref={svgRef} style={{ width:"100%", height:"100%", display:"block" }} />
     </div>
   );
 }
 
-/* ── Intelligence Dashboard (Right Panel) ───────────────────────── */
+/* ── Intelligence Panel ─────────────────────────────────────────── */
 function IntelPanel({ state, dispatch }) {
-  const { graphData, healthData, selectedNode, currentCase, partyHealth } = state;
-  const parties = currentCase?.parties || {};
-  const partyIds = Object.keys(parties);
-
+  const { graphData, healthData, selectedNode, currentCase: cc, partyHealth } = state;
+  const parties = cc?.parties || {};
+  const pids = Object.keys(parties);
   const score = healthData?.score || 0;
   const gaps = healthData?.gaps || [];
   const ready = healthData?.ready || false;
 
   const counts = graphData ? {
-    actors: (graphData.actors || []).length,
-    claims: (graphData.claims || []).length,
-    interests: (graphData.interests || []).length,
-    constraints: (graphData.constraints || []).length,
-    leverages: (graphData.leverages || []).length,
-    commitments: (graphData.commitments || []).length,
-    events: (graphData.events || []).length,
-    narratives: (graphData.narratives || []).length,
+    actors:(graphData.actors||[]).length, claims:(graphData.claims||[]).length,
+    interests:(graphData.interests||[]).length, constraints:(graphData.constraints||[]).length,
+    leverages:(graphData.leverages||[]).length, commitments:(graphData.commitments||[]).length,
+    events:(graphData.events||[]).length, narratives:(graphData.narratives||[]).length,
   } : {};
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const edges = graphData?(graphData.edges||[]).length:0;
+  const maxC = Math.max(...Object.values(counts).map(Number).filter(Boolean), 1);
 
-  const totalNodes = Object.values(counts).reduce((a, b) => a + b, 0);
-  const totalEdges = graphData ? (graphData.edges || []).length : 0;
+  const humanize = g => g
+    .replace(/Actor '([^']+)' has no claims.*/,"Ask $1 what they want or allege")
+    .replace(/Actor '([^']+)' has no interests.*/,"Explore $1's underlying needs")
+    .replace(/Actor '([^']+)' has no narrative.*/,"How does $1 see the situation?")
+    .replace(/No constraints identified.*/,"Any deadlines, legal limits, or budgets?")
+    .replace(/No leverage mapped.*/,"Who holds power in this situation?")
+    .replace(/No events recorded.*/,"What happened — key timeline events?")
+    .replace(/Need at least 2 actors.*/,"Who are the main people involved?");
 
-  // Humanize gaps
-  const humanizeGap = (gap) => {
-    return gap
-      .replace(/Actor '([^']+)' has no claims.*/, "Ask $1 about what they want or allege")
-      .replace(/Actor '([^']+)' has no interests.*/, "Explore $1's underlying needs")
-      .replace(/Actor '([^']+)' has no narrative.*/, "Understand how $1 frames the situation")
-      .replace(/No constraints identified.*/, "Any deadlines, legal limits, or budgets?")
-      .replace(/No leverage mapped.*/, "Who holds power in this situation?")
-      .replace(/No events recorded.*/, "What happened — key timeline events?")
-      .replace(/Need at least 2 actors.*/, "Who are the main people involved?");
-  };
-
-  // Advance phase handler
-  const advancePhase = async () => {
-    if (!currentCase) return;
+  const advance = async () => {
+    if (!cc) return;
     try {
-      const r = await fetch(`/api/cases/${currentCase.case_id}/advance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-      });
-      const data = await r.json();
-      dispatch({ type: "UPDATE_CASE", payload: {
-        phase: data.current_phase,
-        parties: Object.fromEntries(
-          Object.entries(data.parties).map(([pid, ps]) => [pid, ps])
-        ),
-      }});
-      dispatch({ type: "SET_PHASE_OVERLAY", payload: data.current_phase });
-      setTimeout(() => dispatch({ type: "SET_PHASE_OVERLAY", payload: null }), 1500);
+      const d = await (await fetch(`/api/cases/${cc.case_id}/advance`,
+        { method:"POST", headers:{"Content-Type":"application/json"}, body:"{}" })).json();
+      dispatch({ type:"UPDATE_CASE", v: { phase:d.current_phase, parties:d.parties } });
+      dispatch({ type:"PHASE_OVERLAY", v:d.current_phase });
+      setTimeout(() => dispatch({ type:"PHASE_OVERLAY", v:null }), 1500);
     } catch {}
   };
 
   return (
-    <div style={{
-      width: 280, minWidth: 240, borderLeft: "1px solid var(--border)",
-      background: "var(--panel)", padding: 14, overflowY: "auto",
-      display: "flex", flexDirection: "column", gap: 18,
-    }}>
+    <div style={{ width:280, minWidth:220, borderLeft:"1px solid var(--border)", background:"var(--panel)",
+      padding:14, overflowY:"auto", display:"flex", flexDirection:"column", gap:18 }}>
       {/* Health */}
       <div>
-        <h3 style={sectionHeaderStyle}>Health</h3>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+        <h3 style={SH}>Health</h3>
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:8 }}>
           <CircularProgress value={score} size={90} stroke={6} label="GRAPH" />
         </div>
-        <div style={{ textAlign: "center", fontSize: 11, color: "var(--text2)" }}>
-          {totalNodes} nodes &middot; {totalEdges} edges
+        <div style={{ textAlign:"center", fontSize:11, color:"var(--text2)" }}>
+          {total} nodes &middot; {edges} edges
         </div>
-        {ready && (
-          <div style={{
-            marginTop: 8, padding: "6px 10px", background: "rgba(107,191,138,0.1)",
-            border: "1px solid rgba(107,191,138,0.2)", borderRadius: "var(--radius)",
-            textAlign: "center", fontSize: 11, color: "var(--green)", fontWeight: 600,
-          }}>Ready for Resolution</div>
-        )}
+        {ready && <div style={{ marginTop:8, padding:"6px 10px", background:"rgba(107,191,138,0.1)",
+          border:"1px solid rgba(107,191,138,0.2)", borderRadius:"var(--radius)",
+          textAlign:"center", fontSize:11, color:"var(--green)", fontWeight:600 }}>
+          Ready for Resolution</div>}
       </div>
 
       {/* Primitives */}
       <div>
-        <h3 style={sectionHeaderStyle}>Primitives</h3>
-        {Object.entries(COLORS).map(([type, color]) => {
-          const count = counts[type + "s"] || counts[type] || 0;
-          const maxCount = Math.max(...Object.values(counts).map(Number).filter(Boolean), 1);
+        <h3 style={SH}>Primitives</h3>
+        {Object.entries(COLORS).map(([t,c]) => {
+          const n = counts[t+"s"]||counts[t]||0;
           return (
-            <div key={type} onClick={() => dispatch({ type: "SET_FILTER", payload: type })}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "4px 0",
-                cursor: "pointer", opacity: state.filterType && state.filterType !== type ? 0.4 : 1,
-                transition: "opacity var(--transition)",
-              }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", minWidth: 18, textAlign: "right" }}>
-                {count}
-              </span>
-              <span style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{TYPE_LABELS[type]}</span>
-              <div style={{
-                width: 40, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden",
-              }}>
-                <div style={{
-                  width: `${(count / maxCount) * 100}%`, height: "100%",
-                  background: color, borderRadius: 2,
-                  transition: "width 0.5s ease",
-                }} />
+            <div key={t} onClick={() => dispatch({ type:"SET_FILTER", v:t })}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:"pointer",
+                opacity:state.filterType&&state.filterType!==t?0.4:1, transition:"opacity var(--transition)" }}>
+              <span style={{ width:8, height:8, borderRadius:"50%", background:c }} />
+              <span style={{ fontSize:12, fontWeight:600, color:"var(--text)", minWidth:18, textAlign:"right" }}>{n}</span>
+              <span style={{ fontSize:12, color:"var(--text2)", flex:1 }}>{TYPE_LABELS[t]}</span>
+              <div style={{ width:40, height:4, background:"var(--border)", borderRadius:2, overflow:"hidden" }}>
+                <div style={{ width:`${(n/maxC)*100}%`, height:"100%", background:c, borderRadius:2,
+                  transition:"width 0.5s ease" }} />
               </div>
             </div>
           );
@@ -1467,237 +1127,151 @@ function IntelPanel({ state, dispatch }) {
       </div>
 
       {/* Gaps */}
-      {gaps.length > 0 && (
-        <div>
-          <h3 style={sectionHeaderStyle}>Gaps</h3>
-          {gaps.slice(0, 5).map((gap, i) => (
-            <div key={i} style={{
-              fontSize: 11, color: "var(--gold)", padding: "4px 0",
-              lineHeight: 1.4,
-            }}>
-              <span style={{ fontWeight: 700, marginRight: 4 }}>!</span>
-              {humanizeGap(gap)}
-            </div>
-          ))}
-        </div>
-      )}
+      {gaps.length > 0 && <div>
+        <h3 style={SH}>Gaps</h3>
+        {gaps.slice(0,5).map((g,i) => (
+          <div key={i} style={{ fontSize:11, color:"var(--gold)", padding:"4px 0", lineHeight:1.4 }}>
+            <span style={{ fontWeight:700, marginRight:4 }}>!</span>{humanize(g)}
+          </div>
+        ))}
+      </div>}
 
       {/* Parties */}
       <div>
-        <h3 style={sectionHeaderStyle}>Parties</h3>
-        {partyIds.map((pid, i) => {
-          const p = parties[pid];
-          const ph = partyHealth[pid];
+        <h3 style={SH}>Parties</h3>
+        {pids.map(pid => {
+          const p = parties[pid], ph = partyHealth[pid];
           return (
-            <div key={pid} style={{
-              padding: "8px 10px", background: "var(--bg)",
-              borderRadius: "var(--radius)", marginBottom: 6,
-              border: pid === state.activePartyId ? "1px solid var(--accent-dim)" : "1px solid var(--border)",
-              transition: "border-color var(--transition)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={pid} style={{ padding:"8px 10px", background:"var(--bg)", borderRadius:"var(--radius)",
+              marginBottom:6, border: pid===state.activePartyId?"1px solid var(--accent-dim)":"1px solid var(--border)",
+              transition:"border-color var(--transition)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                 <StatusDot status={p.status} />
-                <span style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{p.display_name}</span>
-                <span style={{ fontSize: 11, color: "var(--text2)" }}>{ph?.score || 0}%</span>
+                <span style={{ fontSize:12, fontWeight:600, flex:1 }}>{p.display_name}</span>
+                <span style={{ fontSize:11, color:"var(--text2)" }}>{ph?.score||0}%</span>
               </div>
-              {ph && (
-                <div style={{
-                  marginTop: 4, height: 3, background: "var(--border)", borderRadius: 2,
-                  overflow: "hidden",
-                }}>
-                  <div style={{
-                    width: `${ph.score || 0}%`, height: "100%", borderRadius: 2,
-                    background: (ph.score || 0) >= 60 ? "var(--green)" : "var(--gold)",
-                    transition: "width 0.5s ease",
-                  }} />
-                </div>
-              )}
+              {ph && <div style={{ marginTop:4, height:3, background:"var(--border)", borderRadius:2, overflow:"hidden" }}>
+                <div style={{ width:`${ph.score||0}%`, height:"100%", borderRadius:2,
+                  background:(ph.score||0)>=60?"var(--green)":"var(--gold)", transition:"width 0.5s ease" }} />
+              </div>}
             </div>
           );
         })}
       </div>
 
-      {/* Phase Advance Button */}
-      {currentCase && (
-        <div>
-          {currentCase.phase === "intake_party_1" && partyIds.length >= 2 && (
-            <button className="btn btn-secondary" style={{ width: "100%", fontSize: 11 }}
-              onClick={advancePhase}>
-              Switch to {parties[partyIds[1]]?.display_name || "Party 2"}
-            </button>
-          )}
-          {currentCase.phase === "intake_party_2" && (
-            <button className="btn btn-secondary" style={{ width: "100%", fontSize: 11 }}
-              onClick={advancePhase}>
-              Begin Joint Session
-            </button>
-          )}
-          {currentCase.phase === "joint_session" && (
-            <button className="btn btn-primary" style={{ width: "100%", fontSize: 11 }}
-              onClick={advancePhase}>
-              Move to Resolution
-            </button>
-          )}
-        </div>
-      )}
+      {/* Phase buttons */}
+      {cc && <div>
+        {cc.phase==="intake_party_1" && pids.length>=2 && (
+          <button className="btn btn-secondary" style={{ width:"100%", fontSize:11 }} onClick={advance}>
+            Switch to {parties[pids[1]]?.display_name || "Party 2"}</button>)}
+        {cc.phase==="intake_party_2" && (
+          <button className="btn btn-secondary" style={{ width:"100%", fontSize:11 }} onClick={advance}>
+            Begin Joint Session</button>)}
+        {cc.phase==="joint_session" && (
+          <button className="btn btn-primary" style={{ width:"100%", fontSize:11 }} onClick={advance}>
+            Move to Resolution</button>)}
+      </div>}
 
-      {/* Selected Node */}
-      {selectedNode && (
-        <div>
-          <h3 style={sectionHeaderStyle}>Selected Node</h3>
-          <div style={{
-            padding: "8px 10px", background: "var(--bg)",
-            borderRadius: "var(--radius)", border: "1px solid var(--border)",
-          }}>
-            <span style={{
-              fontSize: 9, fontWeight: 600, letterSpacing: 1,
-              textTransform: "uppercase", padding: "2px 8px", borderRadius: 8,
-              background: COLORS[selectedNode.type] || "#5a6577",
-              color: "#0a0a0f", display: "inline-block", marginBottom: 6,
-            }}>{TYPE_LABELS[selectedNode.type]}</span>
-
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-              {selectedNode.name || selectedNode.content || selectedNode.description || ""}
-            </div>
-
-            {(selectedNode.description || selectedNode.content) && selectedNode.name && (
-              <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4, marginBottom: 4 }}>
-                {selectedNode.description || selectedNode.content}
-              </div>
-            )}
-
-            <div style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.5 }}>
-              {selectedNode.contributed_by && selectedNode.contributed_by !== "default" && (
-                <div>From: {(() => {
-                  const p = parties[selectedNode.contributed_by];
-                  return p ? p.display_name : selectedNode.contributed_by;
-                })()}</div>
-              )}
-              {selectedNode.priority && <div>Priority: {selectedNode.priority}/5</div>}
-              {selectedNode.strength && <div>Strength: {selectedNode.strength}/5</div>}
-              {selectedNode.status && <div>Status: {selectedNode.status}</div>}
-              {selectedNode.date && <div>Date: {selectedNode.date}</div>}
-              {selectedNode.actor_type && <div>Type: {selectedNode.actor_type}</div>}
-              {selectedNode.role_in_conflict && <div>Role: {selectedNode.role_in_conflict}</div>}
-              {selectedNode.frames?.length > 0 && <div>Frames: {selectedNode.frames.join(", ")}</div>}
-            </div>
+      {/* Selected node */}
+      {selectedNode && <div>
+        <h3 style={SH}>Selected Node</h3>
+        <div style={{ padding:"8px 10px", background:"var(--bg)", borderRadius:"var(--radius)",
+          border:"1px solid var(--border)" }}>
+          <span style={{ fontSize:9, fontWeight:600, letterSpacing:1, textTransform:"uppercase",
+            padding:"2px 8px", borderRadius:8, background:COLORS[selectedNode.type]||"#5a6577",
+            color:"#0a0a0f", display:"inline-block", marginBottom:6 }}>{TYPE_LABELS[selectedNode.type]}</span>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:4 }}>
+            {selectedNode.name||selectedNode.content||selectedNode.description||""}</div>
+          {(selectedNode.description||selectedNode.content) && selectedNode.name &&
+            <div style={{ fontSize:11, color:"var(--text2)", lineHeight:1.4, marginBottom:4 }}>
+              {selectedNode.description||selectedNode.content}</div>}
+          <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>
+            {selectedNode.contributed_by && selectedNode.contributed_by!=="default" &&
+              <div>From: {parties[selectedNode.contributed_by]?.display_name || selectedNode.contributed_by}</div>}
+            {selectedNode.priority && <div>Priority: {selectedNode.priority}/5</div>}
+            {selectedNode.strength && <div>Strength: {selectedNode.strength}/5</div>}
+            {selectedNode.status && <div>Status: {selectedNode.status}</div>}
+            {selectedNode.date && <div>Date: {selectedNode.date}</div>}
+            {selectedNode.actor_type && <div>Type: {selectedNode.actor_type}</div>}
+            {selectedNode.role_in_conflict && <div>Role: {selectedNode.role_in_conflict}</div>}
+            {selectedNode.frames?.length>0 && <div>Frames: {selectedNode.frames.join(", ")}</div>}
           </div>
         </div>
-      )}
+      </div>}
+
+      {/* Back + Help */}
+      <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
+        <button className="btn btn-ghost btn-sm" style={{ flex: 1 }}
+          onClick={() => dispatch({ type: "SET_VIEW", v: "landing" })}>Back</button>
+        <button className="btn btn-ghost btn-sm" style={{ flex: 1 }}
+          onClick={() => dispatch({ type: "TOGGLE_HELP" })}>Help</button>
+      </div>
     </div>
   );
 }
 
-const sectionHeaderStyle = {
-  fontSize: 10, fontWeight: 600, letterSpacing: 1.5,
-  color: "#5a6577", textTransform: "uppercase", marginBottom: 10,
-};
-
-/* ── Main Dashboard ─────────────────────────────────────────────── */
+/* ── Dashboard ──────────────────────────────────────────────────── */
 function Dashboard({ state, dispatch }) {
   const wsRef = useRef({});
-  const { currentCase, activePartyId } = state;
-  const parties = currentCase?.parties || {};
+  const { currentCase: cc, activePartyId: apid } = state;
 
-  // Connect WebSocket for active party
+  // Connect WS for active party
   useEffect(() => {
-    if (!currentCase || !activePartyId) return;
-    if (wsRef.current[activePartyId] && wsRef.current[activePartyId].readyState <= 1) return;
+    if (!cc || !apid) return;
+    if (wsRef.current[apid] && wsRef.current[apid].readyState <= 1) return;
 
-    const caseId = currentCase.case_id;
-    const sessionId = `sess-${genId()}`;
-    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${location.host}/ws/${caseId}/${activePartyId}/${sessionId}`);
+    const sid = `sess-${genId()}`;
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${proto}//${location.host}/ws/${cc.case_id}/${apid}/${sid}`);
 
     ws.onopen = () => {
-      dispatch({ type: "ADD_MESSAGE", payload: {
-        partyId: activePartyId,
-        message: { type: "system", content: "Connected to CONCORDIA." },
-      }});
+      dispatch({ type: "DIAG", v: { ws: "connected" } });
+      dispatch({ type: "ADD_MSG", pid: apid, msg: { type: "system", content: "Connected to CONCORDIA." } });
     };
-
     ws.onclose = () => {
-      dispatch({ type: "ADD_MESSAGE", payload: {
-        partyId: activePartyId,
-        message: { type: "system", content: "Disconnected. Reconnecting..." },
-      }});
-      // Reconnect after delay
+      dispatch({ type: "DIAG", v: { ws: "disconnected" } });
+      dispatch({ type: "ADD_MSG", pid: apid, msg: { type: "system", content: "Disconnected. Reconnecting..." } });
       setTimeout(() => {
-        if (wsRef.current[activePartyId] === ws) {
-          delete wsRef.current[activePartyId];
-          // Force re-render to trigger reconnect
-          dispatch({ type: "SET_ACTIVE_PARTY", payload: activePartyId });
+        if (wsRef.current[apid] === ws) {
+          delete wsRef.current[apid];
+          dispatch({ type: "SET_ACTIVE_PARTY", v: apid }); // trigger reconnect
         }
       }, 2000);
     };
-
-    ws.onmessage = (event) => {
-      if (typeof event.data === "string") {
-        try {
-          const msg = JSON.parse(event.data);
-          switch (msg.type) {
-            case "text":
-              dispatch({ type: "ADD_MESSAGE", payload: {
-                partyId: activePartyId,
-                message: { type: "agent", content: msg.content, author: msg.author },
-              }});
-              break;
-            case "tool_call":
-              dispatch({ type: "ADD_MESSAGE", payload: {
-                partyId: activePartyId,
-                message: { type: "tool", tool: msg.tool, args: msg.args },
-              }});
-              break;
-            case "graph_update":
-              dispatch({ type: "UPDATE_GRAPH", payload: msg.graph });
-              dispatch({ type: "UPDATE_HEALTH", payload: msg.health });
-              break;
-            case "system":
-              dispatch({ type: "ADD_MESSAGE", payload: {
-                partyId: activePartyId,
-                message: { type: "system", content: msg.content },
-              }});
-              break;
-            case "error":
-              dispatch({ type: "ADD_MESSAGE", payload: {
-                partyId: activePartyId,
-                message: { type: "error", content: msg.content },
-              }});
-              break;
-          }
-        } catch {}
-      }
+    ws.onerror = () => {
+      dispatch({ type: "DIAG", v: { ws: "error" } });
+      dispatch({ type: "DIAG_ERROR", v: "WebSocket connection failed" });
     };
-
-    wsRef.current[activePartyId] = ws;
-
-    return () => {
-      // Don't close on unmount to keep connection alive
-    };
-  }, [currentCase?.case_id, activePartyId]);
-
-  // Periodically refresh case data (for party health etc.)
-  useEffect(() => {
-    if (!currentCase) return;
-    const interval = setInterval(async () => {
+    ws.onmessage = (ev) => {
+      if (typeof ev.data !== "string") return;
       try {
-        const r = await fetch(`/api/cases/${currentCase.case_id}`);
-        const data = await r.json();
-        if (data.party_health) {
-          Object.entries(data.party_health).forEach(([pid, ph]) => {
-            dispatch({ type: "UPDATE_PARTY_HEALTH", payload: { partyId: pid, health: ph } });
-          });
-        }
-        if (data.phase && data.phase !== currentCase.phase) {
-          dispatch({ type: "UPDATE_CASE", payload: { phase: data.phase, parties: data.parties } });
-        }
+        const m = JSON.parse(ev.data);
+        if (m.type === "text") dispatch({ type:"ADD_MSG", pid:apid, msg:{type:"agent",content:m.content,author:m.author} });
+        else if (m.type === "tool_call") dispatch({ type:"ADD_MSG", pid:apid, msg:{type:"tool",tool:m.tool,args:m.args} });
+        else if (m.type === "graph_update") { dispatch({ type:"UPDATE_GRAPH", v:m.graph }); dispatch({ type:"UPDATE_HEALTH", v:m.health }); }
+        else if (m.type === "system") dispatch({ type:"ADD_MSG", pid:apid, msg:{type:"system",content:m.content} });
+        else if (m.type === "error") dispatch({ type:"ADD_MSG", pid:apid, msg:{type:"error",content:m.content} });
+      } catch {}
+    };
+    wsRef.current[apid] = ws;
+  }, [cc?.case_id, apid]);
+
+  // Poll case data for party health
+  useEffect(() => {
+    if (!cc) return;
+    const iv = setInterval(async () => {
+      try {
+        const d = await (await fetch(`/api/cases/${cc.case_id}`)).json();
+        if (d.party_health) Object.entries(d.party_health).forEach(([p,h]) =>
+          dispatch({ type:"UPDATE_PARTY_HEALTH", pid:p, v:h }));
+        if (d.phase && d.phase !== cc.phase) dispatch({ type:"UPDATE_CASE", v:{phase:d.phase,parties:d.parties} });
       } catch {}
     }, 5000);
-    return () => clearInterval(interval);
-  }, [currentCase?.case_id]);
+    return () => clearInterval(iv);
+  }, [cc?.case_id]);
 
   return (
-    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+    <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
       <ChatPanel state={state} dispatch={dispatch} wsRef={wsRef} />
       <GraphPanel state={state} dispatch={dispatch} />
       <IntelPanel state={state} dispatch={dispatch} />
@@ -1705,41 +1279,28 @@ function Dashboard({ state, dispatch }) {
   );
 }
 
-/* ── Phase Overlay ──────────────────────────────────────────────── */
-function PhaseOverlay({ phase }) {
-  const labels = {
-    intake_party_1: "Party 1 Intake",
-    intake_party_2: "Party 2 Intake",
-    joint_session: "Joint Session",
-    resolution: "Resolution",
-  };
-  return (
-    <div className="phase-overlay">
-      <div className="phase-overlay-text">{labels[phase] || phase}</div>
-    </div>
-  );
-}
-
-/* ── App Root ───────────────────────────────────────────────────── */
+/* ── App ────────────────────────────────────────────────────────── */
 function App() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-
+  const [state, dispatch] = useReducer(reducer, init);
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <ApiKeyBar onSet={(k) => dispatch({ type: "SET_API_KEY", payload: k })} />
-
-      {state.view === "landing" ? (
-        <LandingPage dispatch={dispatch} cases={state.cases} />
-      ) : (
-        <Dashboard state={state} dispatch={dispatch} />
+    <div style={{ height:"100vh", display:"flex", flexDirection:"column" }}>
+      <ApiKeyBar dispatch={dispatch} />
+      <DiagnosticsBar diag={state.diagnostics} />
+      {state.view === "landing" ? <LandingPage state={state} dispatch={dispatch} /> :
+        <Dashboard state={state} dispatch={dispatch} />}
+      {state.phaseOverlay && (
+        <div className="phase-overlay">
+          <div className="phase-overlay-text">
+            {{intake_party_1:"Party 1 Intake",intake_party_2:"Party 2 Intake",
+              joint_session:"Joint Session",resolution:"Resolution"}[state.phaseOverlay]||state.phaseOverlay}
+          </div>
+        </div>
       )}
-
-      {state.phaseOverlay && <PhaseOverlay phase={state.phaseOverlay} />}
+      {state.showHelp && <HelpModal onClose={() => dispatch({ type:"TOGGLE_HELP" })} />}
     </div>
   );
 }
 
-/* ── Mount ──────────────────────────────────────────────────────── */
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
