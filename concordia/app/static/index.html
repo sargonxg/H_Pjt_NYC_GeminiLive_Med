@@ -5,18 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CONCORDIA — Live AI Mediation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
+/* ================================================================
+   CONCORDIA — Design System
+   "Linear meets Palantir" dark premium aesthetic
+   ================================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --bg: #0a0a0f;
   --panel: #10101a;
+  --panel-hover: #14142a;
   --border: #1a1a2e;
+  --border-light: #242440;
   --text: #e0e0e0;
   --text2: #8896a8;
   --muted: #5a6577;
   --accent: #2abfac;
   --accent-dim: #1a8f7f;
+  --accent-glow: rgba(42, 191, 172, 0.15);
   --red: #e85d5d;
   --blue: #4ba3d1;
   --gold: #e8b84d;
@@ -24,438 +34,253 @@
   --purple: #b07fd0;
   --orange: #e8864d;
   --mint: #6bcfaf;
+  --shadow: 0 0 40px rgba(42, 191, 172, 0.03);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --transition: 0.3s ease;
+  --font: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
 }
 
-body {
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+html, body, #root {
+  font-family: var(--font);
   background: var(--bg);
   color: var(--text);
   height: 100vh;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
-/* ── API Key Bar ─────────────────────────────────────────── */
-#apiKeyBar {
-  padding: 10px 20px;
-  background: #1a1020;
-  border-bottom: 1px solid #2a1a3e;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-#apiKeyBar.hidden { display: none; }
-#apiKeyBar label { color: var(--text2); font-size: 12px; }
-#apiKeyInput {
-  flex: 1;
-  background: #0d0d18;
-  border: 1px solid #2a1a3e;
-  color: var(--text);
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 12px;
-}
-#apiKeyBar button {
-  background: var(--accent);
-  color: #0a0a0f;
-  border: none;
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+/* ── Animated Background for Landing ────────────────────────────── */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* ── Header ──────────────────────────────────────────────── */
-#header {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-  gap: 16px;
-  flex-shrink: 0;
-}
-#logo {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--accent);
-}
-#phaseBadge {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  padding: 3px 10px;
-  border-radius: 10px;
-  text-transform: uppercase;
-}
-#healthBarWrap {
-  width: 200px;
-  height: 8px;
-  background: #1a1a2e;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-#healthBarFill {
-  height: 100%;
-  width: 0%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--red), var(--gold), var(--accent));
-  transition: width 0.6s ease;
-}
-#healthLabel { font-size: 11px; color: var(--text2); min-width: 30px; }
-#nodeCount { font-size: 11px; color: var(--muted); margin-left: auto; }
-#wsStatus {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--red);
-  transition: background 0.3s;
-}
-#wsStatus.connected { background: var(--green); }
-
-/* ── Main Layout ─────────────────────────────────────────── */
-#main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
+.landing-bg {
+  background: linear-gradient(-45deg, #0a0a0f, #0d1520, #0a1518, #0a0a0f);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
 }
 
-/* ── Chat Panel ──────────────────────────────────────────── */
-#chatPanel {
-  width: 420px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: var(--panel);
-}
-#messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-#messages::-webkit-scrollbar { width: 4px; }
-#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.msg {
-  max-width: 88%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.45;
-  word-wrap: break-word;
-}
-.msg.user {
-  align-self: flex-end;
-  background: #1a2540;
-  border: 1px solid #243050;
-  color: var(--text);
-}
-.msg.agent {
-  align-self: flex-start;
-  background: #12121e;
-  border: 1px solid var(--border);
-}
-.msg.agent .author {
-  font-size: 10px;
-  color: var(--accent);
-  margin-bottom: 3px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.msg.system {
-  align-self: center;
-  font-style: italic;
-  color: var(--muted);
-  font-size: 11px;
+/* ── Pulse Ring Animation ───────────────────────────────────────── */
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ── Tool Feed ───────────────────────────────────────────── */
-#toolFeed {
-  max-height: 80px;
-  overflow-y: auto;
-  border-top: 1px solid var(--border);
-  padding: 4px 12px;
-  font-size: 10px;
-  color: var(--muted);
-  background: #0c0c14;
-}
-#toolFeed::-webkit-scrollbar { width: 3px; }
-#toolFeed::-webkit-scrollbar-thumb { background: var(--border); }
-.tool-entry {
-  padding: 2px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tool-entry .tool-name { color: var(--accent-dim); }
-
-/* ── Input Bar ───────────────────────────────────────────── */
-#inputBar {
-  display: flex;
-  padding: 10px 12px;
-  gap: 8px;
-  border-top: 1px solid var(--border);
-  background: var(--panel);
-}
-#textInput {
-  flex: 1;
-  background: #0d0d18;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
-}
-#textInput:focus { border-color: var(--accent-dim); }
-#textInput::placeholder { color: var(--muted); }
-#sendBtn, #micBtn {
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-family: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 600;
-}
-#sendBtn {
-  background: var(--accent);
-  color: #0a0a0f;
-}
-#sendBtn:hover { background: #35d4bf; }
-#micBtn {
-  background: transparent;
-  border: 1.5px solid var(--red);
-  color: var(--red);
-  width: 40px;
-  font-size: 16px;
-  padding: 0;
-  transition: all 0.2s;
-}
-#micBtn.recording {
-  background: var(--red);
-  color: #fff;
-  animation: pulse 1.2s infinite;
-}
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232,93,93,0.4); }
   50% { box-shadow: 0 0 0 8px rgba(232,93,93,0); }
 }
 
-/* ── Graph Panel ─────────────────────────────────────────── */
-#graphPanel {
-  flex: 1;
-  position: relative;
-  background: var(--bg);
-  overflow: hidden;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-#graphPanel svg { width: 100%; height: 100%; display: block; }
-#graphEmpty {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: var(--muted);
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes nodeEnter {
+  0% { r: 0; opacity: 0; }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes phaseOverlay {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes countUp {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+@keyframes dashFlow {
+  to { stroke-dashoffset: -20; }
+}
+
+/* ── Button Base ────────────────────────────────────────────────── */
+.btn {
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
   font-size: 13px;
-  pointer-events: none;
-  transition: opacity 0.5s;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
-#graphEmpty .big { font-size: 28px; margin-bottom: 8px; opacity: 0.3; }
 
-/* ── Stats Panel ─────────────────────────────────────────── */
-#statsPanel {
-  width: 220px;
-  min-width: 180px;
-  border-left: 1px solid var(--border);
+.btn-primary {
+  background: var(--accent);
+  color: #0a0a0f;
+  padding: 10px 24px;
+}
+.btn-primary:hover { background: #35d4bf; transform: translateY(-1px); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  padding: 10px 24px;
+}
+.btn-secondary:hover { background: var(--accent-glow); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+  padding: 6px 12px;
+}
+.btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+.btn-sm { padding: 6px 14px; font-size: 11px; }
+
+/* ── Modal / Overlay ────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
   background: var(--panel);
-  padding: 14px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: 90%;
+  max-width: 520px;
+  box-shadow: var(--shadow-lg);
+  animation: fadeInUp 0.3s ease;
 }
-#statsPanel::-webkit-scrollbar { width: 4px; }
-#statsPanel::-webkit-scrollbar-thumb { background: var(--border); }
 
-.stats-section h3 {
+.modal h2 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.modal-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+  margin-bottom: 12px;
+}
+.modal-input:focus { border-color: var(--accent-dim); }
+.modal-input::placeholder { color: var(--muted); }
+
+.modal-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 12px;
+  outline: none;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color var(--transition);
+}
+.modal-textarea:focus { border-color: var(--accent-dim); }
+.modal-textarea::placeholder { color: var(--muted); }
+
+.modal-label {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1.5px;
   color: var(--muted);
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  display: block;
 }
-.stat-row {
-  display: flex;
+
+/* ── Phase Overlay ──────────────────────────────────────────────── */
+.phase-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,10,15,0.9);
+  z-index: 2000;
+  animation: phaseOverlay 1.5s ease forwards;
+  pointer-events: none;
+}
+.phase-overlay-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow: 0 0 40px rgba(42,191,172,0.3);
+}
+
+/* ── Circular Progress ──────────────────────────────────────────── */
+.circular-progress {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 0;
-  font-size: 12px;
+  justify-content: center;
 }
-.stat-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.stat-count {
-  font-weight: 600;
+.circular-progress svg { transform: rotate(-90deg); }
+.circular-progress .progress-text {
+  position: absolute;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text);
-  min-width: 16px;
-  text-align: right;
 }
-.stat-label { color: var(--text2); }
-
-/* Gaps */
-.gap-item {
-  font-size: 11px;
-  color: var(--gold);
-  padding: 4px 0;
-  line-height: 1.35;
-}
-.gap-item::before { content: "! "; font-weight: bold; }
-
-/* Node Detail */
-#nodeDetail { display: none; }
-#nodeDetail.visible { display: block; }
-#nodeDetail .detail-type {
-  font-size: 10px;
-  font-weight: 600;
+.circular-progress .progress-label {
+  position: absolute;
+  bottom: -2px;
+  font-size: 9px;
+  color: var(--muted);
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 8px;
-  display: inline-block;
-  margin-bottom: 6px;
 }
-#nodeDetail .detail-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-#nodeDetail .detail-desc {
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.4;
-}
-#nodeDetail .detail-meta {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-/* Tooltip */
-#tooltip {
-  position: absolute;
-  pointer-events: none;
-  background: #1a1a2e;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  max-width: 260px;
-  word-wrap: break-word;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 100;
-}
-#tooltip.visible { opacity: 1; }
 </style>
 </head>
 <body>
+<div id="root"></div>
 
-<!-- API Key Bar -->
-<div id="apiKeyBar">
-  <label>GEMINI API KEY</label>
-  <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key to start...">
-  <button onclick="setApiKey()">Connect</button>
-</div>
+<script type="text/babel">
+/* ================================================================
+   CONCORDIA — React Frontend
+   Single-file React app with D3 graph, multi-party mediation UX
+   ================================================================ */
 
-<!-- Header -->
-<div id="header">
-  <div id="logo">CONCORDIA</div>
-  <div id="phaseBadge">ARRIVE</div>
-  <div id="healthBarWrap"><div id="healthBarFill"></div></div>
-  <div id="healthLabel">0%</div>
-  <div id="nodeCount">0 nodes &middot; 0 edges</div>
-  <div id="wsStatus" title="WebSocket disconnected"></div>
-</div>
+const { useState, useEffect, useRef, useCallback, useMemo, useReducer } = React;
 
-<!-- Main -->
-<div id="main">
-  <!-- Chat Panel -->
-  <div id="chatPanel">
-    <div id="messages">
-      <div class="msg system">Welcome to CONCORDIA. Connect and start a conversation.</div>
-    </div>
-    <div id="toolFeed"></div>
-    <div id="inputBar">
-      <input type="text" id="textInput" placeholder="Tell me what's going on..." autocomplete="off">
-      <button id="sendBtn" onclick="sendText()">Send</button>
-      <button id="micBtn" onclick="toggleMic()">&#x1f3a4;</button>
-    </div>
-  </div>
-
-  <!-- Graph Panel -->
-  <div id="graphPanel">
-    <div id="graphEmpty">
-      <div class="big">&#x25CE;</div>
-      Start talking — the conflict graph<br>will build live as you speak.
-    </div>
-    <svg id="graphSvg"></svg>
-    <div id="tooltip"></div>
-  </div>
-
-  <!-- Stats Panel -->
-  <div id="statsPanel">
-    <div class="stats-section">
-      <h3>Primitives</h3>
-      <div id="primitiveCounts">
-        <div class="stat-row"><span class="stat-dot" style="background:#e85d5d"></span><span class="stat-count" data-key="actors">0</span><span class="stat-label">Actors</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#2abfac"></span><span class="stat-count" data-key="claims">0</span><span class="stat-label">Claims</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#4ba3d1"></span><span class="stat-count" data-key="interests">0</span><span class="stat-label">Interests</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#6bbf8a"></span><span class="stat-count" data-key="constraints">0</span><span class="stat-label">Constraints</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#e8b84d"></span><span class="stat-count" data-key="leverages">0</span><span class="stat-label">Leverage</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#b07fd0"></span><span class="stat-count" data-key="commitments">0</span><span class="stat-label">Commitments</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#e8864d"></span><span class="stat-count" data-key="events">0</span><span class="stat-label">Events</span></div>
-        <div class="stat-row"><span class="stat-dot" style="background:#6bcfaf"></span><span class="stat-count" data-key="narratives">0</span><span class="stat-label">Narratives</span></div>
-      </div>
-    </div>
-    <div class="stats-section">
-      <h3>Gaps</h3>
-      <div id="gapsList"><span style="font-size:11px;color:var(--muted)">No data yet</span></div>
-    </div>
-    <div class="stats-section" id="nodeDetail">
-      <h3>Selected Node</h3>
-      <div class="detail-type" id="detailType"></div>
-      <div class="detail-name" id="detailName"></div>
-      <div class="detail-desc" id="detailDesc"></div>
-      <div class="detail-meta" id="detailMeta"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ── Constants ───────────────────────────────────────────────
+/* ── Constants ──────────────────────────────────────────────────── */
 const COLORS = {
-  actor:      "#e85d5d",
-  claim:      "#2abfac",
-  interest:   "#4ba3d1",
-  constraint: "#6bbf8a",
-  leverage:   "#e8b84d",
-  commitment: "#b07fd0",
-  event:      "#e8864d",
-  narrative:  "#6bcfaf",
+  actor: "#e85d5d", claim: "#2abfac", interest: "#4ba3d1",
+  constraint: "#6bbf8a", leverage: "#e8b84d", commitment: "#b07fd0",
+  event: "#e8864d", narrative: "#6bcfaf",
 };
 
 const TYPE_LABELS = {
@@ -465,504 +290,1457 @@ const TYPE_LABELS = {
 };
 
 const TYPE_ICONS = {
-  actor: "\u{1F464}", claim: "\u{1F4AC}", interest: "\u{1F3AF}",
-  constraint: "\u{1F512}", leverage: "\u{26A1}", commitment: "\u{1F91D}",
-  event: "\u{1F4C5}", narrative: "\u{1F4D6}",
+  actor: "\u25CF", claim: "\u25C6", interest: "\u25B2",
+  constraint: "\u25A0", leverage: "\u2B21", commitment: "\u25CB",
+  event: "\u25C8", narrative: "\u2662",
 };
 
 const PHASE_COLORS = {
   arrive: "#5a6577", structure: "#4ba3d1",
   verify: "#e8b84d", resolve: "#2abfac",
+  intake_party_1: "#4ba3d1", intake_party_2: "#e8864d",
+  joint_session: "#b07fd0", resolution: "#2abfac",
 };
+
+const PARTY_GLOW_COLORS = [
+  "rgba(75, 163, 209, 0.5)",
+  "rgba(232, 134, 77, 0.5)",
+  "rgba(176, 127, 208, 0.5)",
+  "rgba(107, 191, 138, 0.5)",
+];
 
 function nodeType(id) {
   if (!id) return "actor";
-  const prefix = id.split("_")[0];
-  const map = {
-    actor: "actor", claim: "claim", interest: "interest",
-    constraint: "constraint", leverage: "leverage",
-    commitment: "commitment", event: "event", narrative: "narrative",
-  };
-  return map[prefix] || "actor";
+  return id.split("_")[0] || "actor";
 }
 
 function nodeColor(id) { return COLORS[nodeType(id)] || "#5a6577"; }
 
-// ── State ───────────────────────────────────────────────────
-let ws = null;
-let graphData = null;
-let audioContext = null;
-let mediaStream = null;
-let processor = null;
-let isRecording = false;
+function genId() { return Math.random().toString(36).slice(2, 10); }
 
-// ── WebSocket ───────────────────────────────────────────────
-const userId = "user-" + Math.random().toString(36).slice(2, 8);
-const sessionId = "session-" + Math.random().toString(36).slice(2, 8);
+/* ── State Reducer ──────────────────────────────────────────────── */
+const initialState = {
+  view: "landing",          // "landing" | "dashboard"
+  currentCase: null,
+  activePartyId: null,
+  messages: {},             // { [partyId]: Message[] }
+  graphData: null,
+  healthData: null,
+  partyHealth: {},
+  selectedNode: null,
+  wsConnections: {},        // managed outside reducer
+  apiKey: "",
+  apiKeySet: false,
+  cases: [],
+  phaseOverlay: null,
+  filterType: null,
+};
 
-function connectWs() {
-  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  ws = new WebSocket(`${protocol}//${location.host}/ws/${userId}/${sessionId}`);
+function reducer(state, action) {
+  switch (action.type) {
+    case "SET_VIEW":
+      return { ...state, view: action.payload };
+    case "SET_CASE":
+      return {
+        ...state,
+        currentCase: action.payload,
+        view: "dashboard",
+        messages: {},
+        graphData: null,
+        healthData: null,
+        partyHealth: {},
+        selectedNode: null,
+        activePartyId: action.payload?.parties ? Object.keys(action.payload.parties)[0] : null,
+      };
+    case "SET_ACTIVE_PARTY":
+      return { ...state, activePartyId: action.payload };
+    case "ADD_MESSAGE": {
+      const { partyId, message } = action.payload;
+      const msgs = { ...state.messages };
+      msgs[partyId] = [...(msgs[partyId] || []), message];
+      return { ...state, messages: msgs };
+    }
+    case "UPDATE_GRAPH":
+      return { ...state, graphData: action.payload };
+    case "UPDATE_HEALTH":
+      return { ...state, healthData: action.payload };
+    case "UPDATE_PARTY_HEALTH":
+      return { ...state, partyHealth: { ...state.partyHealth, [action.payload.partyId]: action.payload.health } };
+    case "SELECT_NODE":
+      return { ...state, selectedNode: action.payload };
+    case "SET_API_KEY":
+      return { ...state, apiKey: action.payload, apiKeySet: true };
+    case "SET_CASES":
+      return { ...state, cases: action.payload };
+    case "UPDATE_CASE":
+      return { ...state, currentCase: { ...state.currentCase, ...action.payload } };
+    case "SET_PHASE_OVERLAY":
+      return { ...state, phaseOverlay: action.payload };
+    case "SET_FILTER":
+      return { ...state, filterType: action.payload === state.filterType ? null : action.payload };
+    default:
+      return state;
+  }
+}
 
-  ws.onopen = () => {
-    document.getElementById("wsStatus").classList.add("connected");
-    document.getElementById("wsStatus").title = "Connected";
-    addSystemMessage("Connected to CONCORDIA.");
+/* ================================================================
+   COMPONENTS
+   ================================================================ */
+
+/* ── Circular Progress Indicator ────────────────────────────────── */
+function CircularProgress({ value, size = 80, stroke = 6, label }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (value / 100) * circumference;
+  const color = value >= 75 ? "#6bbf8a" : value >= 40 ? "#e8b84d" : "#e85d5d";
+
+  return (
+    <div className="circular-progress" style={{ width: size, height: size }}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={radius}
+          fill="none" stroke="#1a1a2e" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={radius}
+          fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.8s ease, stroke 0.5s ease" }} />
+      </svg>
+      <span className="progress-text" style={{ color }}>{value}%</span>
+      {label && <span className="progress-label">{label}</span>}
+    </div>
+  );
+}
+
+/* ── Phase Badge ────────────────────────────────────────────────── */
+function PhaseBadge({ phase }) {
+  const bg = PHASE_COLORS[phase] || "#5a6577";
+  const label = (phase || "arrive").replace(/_/g, " ").toUpperCase();
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 600, letterSpacing: 1,
+      padding: "3px 10px", borderRadius: 10, textTransform: "uppercase",
+      background: bg, color: "#0a0a0f", whiteSpace: "nowrap",
+    }}>{label}</span>
+  );
+}
+
+/* ── Status Dot ─────────────────────────────────────────────────── */
+function StatusDot({ status }) {
+  const colors = { waiting: "#e85d5d", active: "#e8b84d", complete: "#6bbf8a" };
+  return (
+    <span style={{
+      width: 8, height: 8, borderRadius: "50%",
+      background: colors[status] || "#5a6577",
+      display: "inline-block", flexShrink: 0,
+    }} />
+  );
+}
+
+/* ── API Key Bar ────────────────────────────────────────────────── */
+function ApiKeyBar({ onSet }) {
+  const [key, setKey] = useState("");
+  const [hidden, setHidden] = useState(false);
+
+  const submit = async () => {
+    if (!key.trim()) return;
+    try {
+      await fetch("/api/set-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: key.trim() }),
+      });
+      onSet(key.trim());
+      setHidden(true);
+    } catch {}
   };
 
-  ws.onclose = () => {
-    document.getElementById("wsStatus").classList.remove("connected");
-    document.getElementById("wsStatus").title = "Disconnected — reconnecting...";
-    setTimeout(connectWs, 2000);
+  if (hidden) return null;
+  return (
+    <div style={{
+      padding: "8px 20px", background: "#1a1020",
+      borderBottom: "1px solid #2a1a3e",
+      display: "flex", alignItems: "center", gap: 10,
+    }}>
+      <label style={{ color: "#8896a8", fontSize: 11, letterSpacing: 1, fontWeight: 600 }}>
+        GEMINI API KEY
+      </label>
+      <input type="password" value={key} onChange={e => setKey(e.target.value)}
+        placeholder="Enter your Gemini API key..."
+        onKeyDown={e => e.key === "Enter" && submit()}
+        style={{
+          flex: 1, background: "#0d0d18", border: "1px solid #2a1a3e",
+          color: "var(--text)", padding: "6px 12px", borderRadius: 4,
+          fontFamily: "var(--font)", fontSize: 12, outline: "none",
+        }} />
+      <button className="btn btn-primary btn-sm" onClick={submit}>Connect</button>
+      <button className="btn btn-ghost btn-sm" onClick={() => setHidden(true)}
+        style={{ fontSize: 10 }}>Skip</button>
+    </div>
+  );
+}
+
+/* ── Create Case Modal ──────────────────────────────────────────── */
+function CreateCaseModal({ onClose, onCreated }) {
+  const [title, setTitle] = useState("");
+  const [parties, setParties] = useState(["", ""]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const addParty = () => {
+    if (parties.length < 4) setParties([...parties, ""]);
   };
 
-  ws.onerror = () => {};
+  const updateParty = (i, val) => {
+    const p = [...parties]; p[i] = val; setParties(p);
+  };
 
-  ws.onmessage = (event) => {
-    if (typeof event.data === "string") {
-      const msg = JSON.parse(event.data);
-      switch (msg.type) {
-        case "text":
-          addAgentMessage(msg.content, msg.author);
-          break;
-        case "tool_call":
-          addToolEntry(msg.tool, msg.args);
-          break;
-        case "graph_update":
-          updateGraph(msg.graph);
-          updateStats(msg.graph, msg.health);
-          updateHealth(msg.health);
-          break;
-        case "transcription":
-          // Optional: show live transcription
-          break;
+  const removeParty = (i) => {
+    if (parties.length > 2) setParties(parties.filter((_, idx) => idx !== i));
+  };
+
+  const submit = async () => {
+    const names = parties.map(p => p.trim()).filter(Boolean);
+    if (names.length < 2) { setError("Need at least 2 party names."); return; }
+    setLoading(true); setError("");
+    try {
+      const r = await fetch("/api/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), parties: names }),
+      });
+      if (!r.ok) { setError("Failed to create case."); setLoading(false); return; }
+      const data = await r.json();
+      onCreated(data);
+    } catch (e) {
+      setError("Network error."); setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <h2>Start New Mediation</h2>
+        <label className="modal-label">Case Title (optional)</label>
+        <input className="modal-input" value={title} onChange={e => setTitle(e.target.value)}
+          placeholder="e.g. Chen-Martinez Lease Dispute" />
+
+        <label className="modal-label" style={{ marginTop: 8 }}>Parties</label>
+        {parties.map((p, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input className="modal-input" value={p}
+              onChange={e => updateParty(i, e.target.value)}
+              placeholder={`Party ${i + 1} name`}
+              style={{ marginBottom: 0, flex: 1 }} />
+            {parties.length > 2 && (
+              <button className="btn btn-ghost btn-sm" onClick={() => removeParty(i)}
+                style={{ color: "var(--red)", fontSize: 14 }}>×</button>
+            )}
+          </div>
+        ))}
+        {parties.length < 4 && (
+          <button className="btn btn-ghost btn-sm" onClick={addParty}
+            style={{ marginBottom: 16 }}>+ Add Party</button>
+        )}
+
+        {error && <div style={{ color: "var(--red)", fontSize: 12, marginBottom: 12 }}>{error}</div>}
+
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit} disabled={loading}>
+            {loading ? "Creating..." : "Create Case"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Upload Text Modal ──────────────────────────────────────────── */
+function UploadTextModal({ onClose, caseId, partyId, partyName, onUploaded }) {
+  const [text, setText] = useState("");
+  const [docName, setDocName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const submit = async () => {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/cases/${caseId}/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          party_id: partyId,
+          text: text.trim(),
+          document_name: docName.trim() || "Pasted Document",
+        }),
+      });
+      const data = await r.json();
+      setResult(data);
+      if (onUploaded) onUploaded(data);
+    } catch {
+      setResult({ status: "error", error: "Upload failed" });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 600 }}>
+        <h2>Upload Document — {partyName}</h2>
+        <label className="modal-label">Document Name</label>
+        <input className="modal-input" value={docName} onChange={e => setDocName(e.target.value)}
+          placeholder="e.g. Lease Agreement, Email Chain" />
+
+        <label className="modal-label">Document Text</label>
+        <textarea className="modal-textarea" value={text} onChange={e => setText(e.target.value)}
+          placeholder={"Paste the document text here...\n\nSupported formats:\n- Plain text\n- Email chains (From: / Subject: / Date:)\n- Structured JSON: { party_name, their_story, what_they_want, key_events, documents }"}
+          style={{ minHeight: 200 }} />
+
+        {result && (
+          <div style={{
+            marginTop: 12, padding: 12, background: "var(--bg)",
+            borderRadius: "var(--radius)", fontSize: 12,
+            color: result.status === "error" ? "var(--red)" : "var(--green)",
+          }}>
+            {result.status === "ingested" ? (
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Document processed</div>
+                <div style={{ color: "var(--text2)" }}>
+                  Format: {result.format_detected} | Health: {result.party_health?.score || 0}%
+                </div>
+                {result.agent_summary && (
+                  <div style={{ color: "var(--text2)", marginTop: 4 }}>{result.agent_summary}</div>
+                )}
+              </div>
+            ) : (
+              <div>Error: {result.error || "Unknown error"}</div>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Close</button>
+          <button className="btn btn-primary" onClick={submit} disabled={loading}>
+            {loading ? "Processing..." : "Upload & Extract"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Landing Page ───────────────────────────────────────────────── */
+function LandingPage({ dispatch, cases }) {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/cases").then(r => r.json()).then(data => {
+      if (Array.isArray(data)) dispatch({ type: "SET_CASES", payload: data });
+    }).catch(() => {});
+  }, []);
+
+  const onCreated = async (data) => {
+    setShowCreateModal(false);
+    // Fetch full case details
+    try {
+      const r = await fetch(`/api/cases/${data.case_id}`);
+      const fullCase = await r.json();
+      dispatch({ type: "SET_CASE", payload: fullCase });
+    } catch {
+      dispatch({ type: "SET_CASE", payload: data });
+    }
+  };
+
+  const resumeCase = async (caseId) => {
+    try {
+      const r = await fetch(`/api/cases/${caseId}`);
+      const fullCase = await r.json();
+      dispatch({ type: "SET_CASE", payload: fullCase });
+    } catch {}
+  };
+
+  return (
+    <div className="landing-bg" style={{
+      height: "100vh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", position: "relative",
+    }}>
+      {/* Hero */}
+      <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 60 }}>
+        <h1 style={{
+          fontSize: 32, fontWeight: 700, letterSpacing: 6,
+          color: "var(--accent)", marginBottom: 16,
+          textShadow: "0 0 30px rgba(42,191,172,0.2)",
+        }}>CONCORDIA</h1>
+        <p style={{
+          fontSize: 13, color: "var(--text2)", maxWidth: 460,
+          lineHeight: 1.6, margin: "0 auto",
+        }}>
+          When the picture is complete, the mediator becomes a bridge-builder.
+        </p>
+        <p style={{
+          fontSize: 11, color: "var(--muted)", marginTop: 8,
+        }}>
+          AI-powered conflict mediation with live knowledge graph
+        </p>
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{
+        display: "flex", gap: 16, animation: "fadeInUp 1s ease",
+      }}>
+        <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}
+          style={{ padding: "14px 32px", fontSize: 14 }}>
+          Start New Mediation
+        </button>
+      </div>
+
+      {/* Active Cases */}
+      {cases.length > 0 && (
+        <div style={{
+          marginTop: 48, animation: "fadeInUp 1.2s ease",
+          width: "100%", maxWidth: 600, padding: "0 20px",
+        }}>
+          <h3 style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: 1.5,
+            color: "var(--muted)", textTransform: "uppercase",
+            marginBottom: 12,
+          }}>Active Cases</h3>
+          {cases.map(c => (
+            <div key={c.case_id} onClick={() => resumeCase(c.case_id)}
+              style={{
+                padding: "12px 16px", background: "var(--panel)",
+                border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                marginBottom: 8, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 12,
+                transition: "all var(--transition)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent-dim)"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                  {c.title || "Untitled Case"}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                  {Object.values(c.parties || {}).map(p => p.display_name).join(" vs ")}
+                </div>
+              </div>
+              <PhaseBadge phase={c.phase} />
+              <span style={{ fontSize: 11, color: "var(--text2)" }}>
+                {c.graph_health?.score || 0}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pulse ring decoration */}
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%, -50%)", pointerEvents: "none", zIndex: 0,
+      }}>
+        <div style={{
+          width: 300, height: 300, borderRadius: "50%",
+          border: "1px solid rgba(42,191,172,0.08)",
+          animation: "pulseRing 4s ease-out infinite",
+        }} />
+      </div>
+
+      {showCreateModal && (
+        <CreateCaseModal onClose={() => setShowCreateModal(false)} onCreated={onCreated} />
+      )}
+    </div>
+  );
+}
+
+/* ── Tool Feed Item ─────────────────────────────────────────────── */
+function ToolEntry({ tool, args }) {
+  const color = COLORS[tool.replace("add_", "")] || "var(--accent-dim)";
+  const argStr = Object.entries(args || {})
+    .filter(([k]) => ["name","content","description","case_title"].includes(k))
+    .map(([, v]) => String(v).slice(0, 35))
+    .join(", ");
+  return (
+    <div style={{
+      padding: "2px 0", whiteSpace: "nowrap", overflow: "hidden",
+      textOverflow: "ellipsis", fontSize: 10, color: "var(--muted)",
+    }}>
+      <span style={{ color }}>&#x25C6; {tool}</span>
+      {argStr && <span style={{ marginLeft: 4 }}>{argStr}</span>}
+    </div>
+  );
+}
+
+/* ── Chat Panel ─────────────────────────────────────────────────── */
+function ChatPanel({ state, dispatch, wsRef }) {
+  const [text, setText] = useState("");
+  const [showUpload, setShowUpload] = useState(false);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const audioRef = useRef({ context: null, stream: null, processor: null, recording: false });
+  const [recording, setRecording] = useState(false);
+
+  const { currentCase, activePartyId, messages } = state;
+  const parties = currentCase?.parties || {};
+  const partyIds = Object.keys(parties);
+  const partyMessages = messages[activePartyId] || [];
+  const activeParty = parties[activePartyId];
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [partyMessages.length]);
+
+  const sendMessage = () => {
+    const msg = text.trim();
+    if (!msg || !wsRef.current?.[activePartyId]) return;
+    const ws = wsRef.current[activePartyId];
+    if (ws.readyState !== WebSocket.OPEN) return;
+    dispatch({ type: "ADD_MESSAGE", payload: {
+      partyId: activePartyId,
+      message: { type: "user", content: msg },
+    }});
+    ws.send(JSON.stringify({ type: "text", content: msg }));
+    setText("");
+  };
+
+  const startAudio = async () => {
+    try {
+      const ctx = new AudioContext({ sampleRate: 16000 });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 16000, channelCount: 1 },
+      });
+      const source = ctx.createMediaStreamSource(stream);
+      const proc = ctx.createScriptProcessor(4096, 1, 1);
+      proc.onaudioprocess = (e) => {
+        const ws = wsRef.current?.[activePartyId];
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const f32 = e.inputBuffer.getChannelData(0);
+          const i16 = new Int16Array(f32.length);
+          for (let i = 0; i < f32.length; i++) {
+            i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
+          }
+          ws.send(i16.buffer);
+        }
+      };
+      source.connect(proc);
+      proc.connect(ctx.destination);
+      audioRef.current = { context: ctx, stream, processor: proc, recording: true };
+      setRecording(true);
+    } catch {
+      dispatch({ type: "ADD_MESSAGE", payload: {
+        partyId: activePartyId,
+        message: { type: "system", content: "Microphone access denied." },
+      }});
+    }
+  };
+
+  const stopAudio = () => {
+    const a = audioRef.current;
+    if (a.processor) a.processor.disconnect();
+    if (a.stream) a.stream.getTracks().forEach(t => t.stop());
+    if (a.context) a.context.close();
+    audioRef.current = { context: null, stream: null, processor: null, recording: false };
+    setRecording(false);
+  };
+
+  const toggleMic = () => recording ? stopAudio() : startAudio();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape" && showUpload) { setShowUpload(false); return; }
+      if (e.ctrlKey && e.key === "m") { e.preventDefault(); toggleMic(); }
+      if (e.ctrlKey && e.key >= "1" && e.key <= "4") {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        if (partyIds[idx]) dispatch({ type: "SET_ACTIVE_PARTY", payload: partyIds[idx] });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [showUpload, recording, partyIds]);
+
+  // Per-party health
+  const partyHealth = state.partyHealth[activePartyId];
+  const partyScore = partyHealth?.score || 0;
+
+  return (
+    <div style={{
+      width: 400, minWidth: 320, display: "flex", flexDirection: "column",
+      borderRight: "1px solid var(--border)", background: "var(--panel)",
+    }}>
+      {/* Party Tabs */}
+      <div style={{
+        display: "flex", borderBottom: "1px solid var(--border)",
+        background: "var(--bg)", flexShrink: 0,
+      }}>
+        {partyIds.map((pid, i) => {
+          const p = parties[pid];
+          return (
+            <div key={pid} onClick={() => dispatch({ type: "SET_ACTIVE_PARTY", payload: pid })}
+              style={{
+                flex: 1, padding: "10px 12px", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+                borderBottom: pid === activePartyId ? "2px solid var(--accent)" : "2px solid transparent",
+                background: pid === activePartyId ? "var(--panel)" : "transparent",
+                transition: "all var(--transition)",
+              }}>
+              <StatusDot status={p.status} />
+              <span style={{
+                fontSize: 12, fontWeight: pid === activePartyId ? 600 : 400,
+                color: pid === activePartyId ? "var(--text)" : "var(--text2)",
+              }}>{p.display_name}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Party Info Card */}
+      {activeParty && (
+        <div style={{
+          padding: "10px 14px", borderBottom: "1px solid var(--border)",
+          display: "flex", alignItems: "center", gap: 12, flexShrink: 0,
+        }}>
+          <CircularProgress value={partyScore} size={44} stroke={4} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{activeParty.display_name}</div>
+            <div style={{ fontSize: 10, color: "var(--muted)" }}>
+              {activeParty.status === "complete" ? "Intake complete" :
+               activeParty.status === "active" ? "Providing input" : "Waiting"}
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowUpload(true)}
+            style={{ fontSize: 10 }}>Upload Doc</button>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div style={{
+        flex: 1, overflowY: "auto", padding: 12,
+        display: "flex", flexDirection: "column", gap: 6,
+      }}>
+        {partyMessages.length === 0 && (
+          <div style={{
+            textAlign: "center", color: "var(--muted)", fontSize: 12,
+            marginTop: 40, lineHeight: 1.6,
+          }}>
+            Welcome to CONCORDIA.<br />
+            Tell me what's going on.
+          </div>
+        )}
+        {partyMessages.map((msg, i) => {
+          if (msg.type === "user") return (
+            <div key={i} style={{
+              alignSelf: "flex-end", maxWidth: "85%",
+              padding: "8px 12px", borderRadius: "12px 12px 4px 12px",
+              background: "#1a2540", border: "1px solid #243050",
+              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word",
+              animation: "fadeIn 0.2s ease",
+            }}>{msg.content}</div>
+          );
+          if (msg.type === "agent") return (
+            <div key={i} style={{
+              alignSelf: "flex-start", maxWidth: "85%",
+              padding: "8px 12px", borderRadius: "12px 12px 12px 4px",
+              background: "#12121e", border: "1px solid var(--border)",
+              fontSize: 13, lineHeight: 1.45, wordBreak: "break-word",
+              animation: "fadeIn 0.2s ease",
+            }}>
+              <div style={{
+                fontSize: 9, color: "var(--accent)", marginBottom: 3,
+                textTransform: "uppercase", letterSpacing: 1,
+              }}>{msg.author || "concordia"}</div>
+              {msg.content}
+            </div>
+          );
+          if (msg.type === "tool") return (
+            <ToolEntry key={i} tool={msg.tool} args={msg.args} />
+          );
+          if (msg.type === "system") return (
+            <div key={i} style={{
+              alignSelf: "center", fontStyle: "italic",
+              color: msg.content.includes("comprehensive") ? "var(--green)" : "var(--muted)",
+              fontSize: 11, textAlign: "center", padding: "4px 0",
+            }}>{msg.content}</div>
+          );
+          if (msg.type === "error") return (
+            <div key={i} style={{
+              alignSelf: "center", color: "var(--red)",
+              fontSize: 11, textAlign: "center", padding: "4px 0",
+            }}>{msg.content}</div>
+          );
+          return null;
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Bar */}
+      <div style={{
+        display: "flex", padding: "10px 12px", gap: 8,
+        borderTop: "1px solid var(--border)", background: "var(--panel)", flexShrink: 0,
+      }}>
+        <input ref={inputRef} type="text" value={text} onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
+          placeholder="Tell me what's going on..."
+          style={{
+            flex: 1, background: "#0d0d18", border: "1px solid var(--border)",
+            color: "var(--text)", padding: "8px 12px", borderRadius: 6,
+            fontFamily: "var(--font)", fontSize: 13, outline: "none",
+          }} />
+        <button className="btn btn-primary btn-sm" onClick={sendMessage}>Send</button>
+        <button onClick={toggleMic}
+          style={{
+            border: recording ? "none" : "1.5px solid var(--red)",
+            borderRadius: 6, width: 38, height: 36, display: "flex",
+            alignItems: "center", justifyContent: "center", cursor: "pointer",
+            background: recording ? "var(--red)" : "transparent",
+            color: recording ? "#fff" : "var(--red)",
+            fontSize: 14, fontFamily: "var(--font)",
+            animation: recording ? "pulse 1.2s infinite" : "none",
+            transition: "all 0.2s",
+          }}>&#x1F3A4;</button>
+      </div>
+
+      {showUpload && currentCase && activePartyId && (
+        <UploadTextModal
+          onClose={() => setShowUpload(false)}
+          caseId={currentCase.case_id}
+          partyId={activePartyId}
+          partyName={activeParty?.display_name || ""}
+          onUploaded={(data) => {
+            if (data.health) dispatch({ type: "UPDATE_HEALTH", payload: data.health });
+            if (data.party_health) dispatch({ type: "UPDATE_PARTY_HEALTH", payload: { partyId: activePartyId, health: data.party_health }});
+            // Re-fetch graph
+            fetch(`/api/cases/${currentCase.case_id}`)
+              .then(r => r.json())
+              .then(d => {
+                if (d.graph) dispatch({ type: "UPDATE_GRAPH", payload: d.graph });
+              }).catch(() => {});
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── D3 Force Graph ─────────────────────────────────────────────── */
+function GraphPanel({ state, dispatch }) {
+  const containerRef = useRef(null);
+  const svgRef = useRef(null);
+  const simRef = useRef(null);
+  const nodesRef = useRef([]);
+  const linksRef = useRef([]);
+  const gRef = useRef(null);
+  const initialized = useRef(false);
+
+  const { graphData, filterType, currentCase } = state;
+  const parties = currentCase?.parties || {};
+  const partyIds = Object.keys(parties);
+
+  // Initialize D3
+  useEffect(() => {
+    if (initialized.current || !svgRef.current) return;
+    initialized.current = true;
+
+    const svg = d3.select(svgRef.current);
+    const container = containerRef.current;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    svg.attr("viewBox", [0, 0, w, h]);
+
+    // Defs: arrow marker + glow filters
+    const defs = svg.append("defs");
+
+    defs.append("marker")
+      .attr("id", "arrow")
+      .attr("viewBox", "0 -4 8 8")
+      .attr("refX", 24).attr("refY", 0)
+      .attr("markerWidth", 5).attr("markerHeight", 5)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-3L8,0L0,3")
+      .attr("fill", "#2a2a3e");
+
+    // Party glow filters
+    PARTY_GLOW_COLORS.forEach((color, i) => {
+      const filter = defs.append("filter").attr("id", `glow-${i}`);
+      filter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "blur");
+      filter.append("feFlood").attr("flood-color", color).attr("result", "color");
+      filter.append("feComposite").attr("in", "color").attr("in2", "blur").attr("operator", "in").attr("result", "glow");
+      const merge = filter.append("feMerge");
+      merge.append("feMergeNode").attr("in", "glow");
+      merge.append("feMergeNode").attr("in", "SourceGraphic");
+    });
+
+    const g = svg.append("g").attr("class", "graph-root");
+    gRef.current = g;
+
+    // Zoom
+    svg.call(d3.zoom().scaleExtent([0.2, 4])
+      .on("zoom", (e) => g.attr("transform", e.transform)));
+
+    g.append("g").attr("class", "links");
+    g.append("g").attr("class", "nodes");
+    g.append("g").attr("class", "labels");
+
+    simRef.current = d3.forceSimulation()
+      .force("link", d3.forceLink().id(d => d.id).distance(100))
+      .force("charge", d3.forceManyBody().strength(-280))
+      .force("center", d3.forceCenter(w / 2, h / 2))
+      .force("collision", d3.forceCollide(32))
+      .on("tick", () => {
+        g.select(".links").selectAll("line")
+          .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        g.select(".nodes").selectAll("circle")
+          .attr("cx", d => d.x).attr("cy", d => d.y);
+        g.select(".labels").selectAll("text")
+          .attr("x", d => d.x).attr("y", d => d.y + (d.r || 12) + 14);
+      });
+    simRef.current.stop();
+
+    // Resize handler
+    const onResize = () => {
+      const nw = container.clientWidth;
+      const nh = container.clientHeight;
+      svg.attr("viewBox", [0, 0, nw, nh]);
+      simRef.current.force("center", d3.forceCenter(nw / 2, nh / 2));
+      simRef.current.alpha(0.3).restart();
+    };
+    window.addEventListener("resize", onResize);
+  }, []);
+
+  // Update graph when data changes
+  useEffect(() => {
+    if (!graphData || !gRef.current || !simRef.current) return;
+
+    const g = gRef.current;
+    const sim = simRef.current;
+
+    // Build nodes
+    let nodes = [
+      ...(graphData.actors || []).map(n => ({ ...n, type: "actor", label: n.name, r: 22 })),
+      ...(graphData.claims || []).map(n => ({ ...n, type: "claim", label: (n.content || "").slice(0, 28), r: 13 })),
+      ...(graphData.interests || []).map(n => ({ ...n, type: "interest", label: (n.description || "").slice(0, 25), r: 12 })),
+      ...(graphData.constraints || []).map(n => ({ ...n, type: "constraint", label: (n.description || "").slice(0, 25), r: 12 })),
+      ...(graphData.leverages || []).map(n => ({ ...n, type: "leverage", label: (n.description || "").slice(0, 25), r: 13 })),
+      ...(graphData.commitments || []).map(n => ({ ...n, type: "commitment", label: (n.description || "").slice(0, 25), r: 11 })),
+      ...(graphData.events || []).map(n => ({ ...n, type: "event", label: (n.description || "").slice(0, 25), r: 12 })),
+      ...(graphData.narratives || []).map(n => ({ ...n, type: "narrative", label: (n.description || "").slice(0, 25), r: 12 })),
+    ];
+
+    // Filter
+    if (filterType) {
+      const actorIds = new Set(nodes.filter(n => n.type === "actor").map(n => n.id));
+      nodes = nodes.filter(n => n.type === filterType || n.type === "actor");
+    }
+
+    const nodeIds = new Set(nodes.map(n => n.id));
+    const links = (graphData.edges || [])
+      .filter(e => nodeIds.has(e.source_id || (e.source && e.source.id) || e.source)
+                 && nodeIds.has(e.target_id || (e.target && e.target.id) || e.target))
+      .map(e => ({
+        source: e.source_id || e.source,
+        target: e.target_id || e.target,
+        rel: e.relationship
+      }));
+
+    // Preserve positions
+    const oldMap = {};
+    nodesRef.current.forEach(n => { oldMap[n.id] = { x: n.x, y: n.y, vx: n.vx, vy: n.vy }; });
+    nodes.forEach(n => {
+      if (oldMap[n.id]) { n.x = oldMap[n.id].x; n.y = oldMap[n.id].y; n.vx = oldMap[n.id].vx; n.vy = oldMap[n.id].vy; }
+    });
+    nodesRef.current = nodes;
+    linksRef.current = links;
+
+    // Party index lookup
+    const partyIndex = {};
+    partyIds.forEach((pid, i) => { partyIndex[pid] = i; });
+
+    // Links
+    g.select(".links").selectAll("line")
+      .data(links, d => `${typeof d.source === 'object' ? d.source.id : d.source}-${typeof d.target === 'object' ? d.target.id : d.target}-${d.rel}`)
+      .join(
+        enter => enter.append("line")
+          .attr("stroke", "#2a2a3e").attr("stroke-width", 1.2)
+          .attr("marker-end", "url(#arrow)")
+          .attr("stroke-dasharray", "4 3")
+          .style("animation", "dashFlow 1s linear infinite")
+          .attr("opacity", 0)
+          .transition().duration(400).attr("opacity", 0.6),
+        update => update,
+        exit => exit.transition().duration(300).attr("opacity", 0).remove()
+      );
+
+    // Nodes
+    const drag = d3.drag()
+      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on("end", (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; });
+
+    g.select(".nodes").selectAll("circle")
+      .data(nodes, d => d.id)
+      .join(
+        enter => enter.append("circle")
+          .attr("r", 0)
+          .attr("fill", d => COLORS[d.type] || "#5a6577")
+          .attr("stroke", d => COLORS[d.type] || "#5a6577")
+          .attr("stroke-width", d => d.type === "actor" ? 2.5 : 1.5)
+          .attr("fill-opacity", 0.2)
+          .attr("cursor", "pointer")
+          .attr("filter", d => {
+            const pi = partyIndex[d.contributed_by];
+            return pi !== undefined ? `url(#glow-${pi})` : null;
+          })
+          .on("click", (e, d) => {
+            dispatch({ type: "SELECT_NODE", payload: d });
+            // Highlight connected
+            const connectedIds = new Set([d.id]);
+            (graphData.edges || []).forEach(edge => {
+              if (edge.source_id === d.id) connectedIds.add(edge.target_id);
+              if (edge.target_id === d.id) connectedIds.add(edge.source_id);
+            });
+            g.select(".nodes").selectAll("circle")
+              .attr("opacity", n => connectedIds.has(n.id) ? 1 : 0.15);
+            g.select(".links").selectAll("line")
+              .attr("opacity", l => {
+                const sid = typeof l.source === 'object' ? l.source.id : l.source;
+                const tid = typeof l.target === 'object' ? l.target.id : l.target;
+                return sid === d.id || tid === d.id ? 0.8 : 0.05;
+              });
+            g.select(".labels").selectAll("text")
+              .attr("opacity", n => connectedIds.has(n.id) ? 0.9 : 0.1);
+          })
+          .call(drag)
+          .transition().duration(600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
+          .attr("r", d => d.r),
+        update => update
+          .attr("fill", d => COLORS[d.type] || "#5a6577")
+          .attr("stroke", d => COLORS[d.type] || "#5a6577")
+          .attr("opacity", 1),
+        exit => exit.transition().duration(300).attr("r", 0).remove()
+      );
+
+    // Labels
+    g.select(".labels").selectAll("text")
+      .data(nodes, d => d.id)
+      .join(
+        enter => enter.append("text")
+          .attr("text-anchor", "middle")
+          .attr("font-size", d => d.type === "actor" ? "11px" : "9px")
+          .attr("font-weight", d => d.type === "actor" ? "600" : "400")
+          .attr("fill", d => COLORS[d.type] || "#5a6577")
+          .attr("fill-opacity", 0)
+          .attr("pointer-events", "none")
+          .text(d => {
+            const icon = TYPE_ICONS[d.type] || "";
+            return `${icon} ${(d.label || "").slice(0, 28)}`;
+          })
+          .transition().duration(500).attr("fill-opacity", 0.8),
+        update => update.text(d => {
+          const icon = TYPE_ICONS[d.type] || "";
+          return `${icon} ${(d.label || "").slice(0, 28)}`;
+        }).attr("opacity", 1),
+        exit => exit.transition().duration(300).attr("fill-opacity", 0).remove()
+      );
+
+    // Update simulation
+    sim.nodes(nodes);
+    sim.force("link").links(links);
+    sim.alpha(0.5).restart();
+
+  }, [graphData, filterType]);
+
+  // Click on background to deselect
+  const handleBgClick = (e) => {
+    if (e.target === svgRef.current || e.target.tagName === 'svg') {
+      dispatch({ type: "SELECT_NODE", payload: null });
+      if (gRef.current) {
+        gRef.current.select(".nodes").selectAll("circle").attr("opacity", 1);
+        gRef.current.select(".links").selectAll("line").attr("opacity", 0.6);
+        gRef.current.select(".labels").selectAll("text").attr("opacity", 0.8);
       }
     }
-    // Binary data = audio playback (future)
   };
+
+  const totalNodes = graphData ?
+    (graphData.actors||[]).length + (graphData.claims||[]).length +
+    (graphData.interests||[]).length + (graphData.constraints||[]).length +
+    (graphData.leverages||[]).length + (graphData.commitments||[]).length +
+    (graphData.events||[]).length + (graphData.narratives||[]).length : 0;
+
+  const phase = currentCase?.phase || graphData?.phase || "arrive";
+  const escalation = graphData?.escalation_level || "latent";
+
+  return (
+    <div ref={containerRef} style={{
+      flex: 1, position: "relative", background: "var(--bg)", overflow: "hidden",
+    }} onClick={handleBgClick}>
+      {/* Graph overlays */}
+      <div style={{
+        position: "absolute", top: 12, left: 14, zIndex: 10,
+        display: "flex", flexDirection: "column", gap: 6, pointerEvents: "none",
+      }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", pointerEvents: "auto" }}>
+          <span style={{
+            fontSize: 13, fontWeight: 700, letterSpacing: 3,
+            color: "var(--accent)", textShadow: "0 0 20px rgba(42,191,172,0.15)",
+          }}>CONCORDIA</span>
+          <PhaseBadge phase={phase} />
+          {escalation !== "latent" && (
+            <span style={{
+              fontSize: 9, padding: "2px 8px", borderRadius: 8,
+              background: escalation === "crisis" || escalation === "destructive" ? "var(--red)" : "var(--gold)",
+              color: "#0a0a0f", fontWeight: 600, letterSpacing: 0.5,
+              textTransform: "uppercase",
+            }}>{escalation}</span>
+          )}
+        </div>
+        {currentCase?.title && (
+          <span style={{ fontSize: 11, color: "var(--text2)" }}>
+            {currentCase.title}
+          </span>
+        )}
+      </div>
+
+      {/* Legend */}
+      <div style={{
+        position: "absolute", bottom: 12, left: 14, zIndex: 10,
+        display: "flex", gap: 12, flexWrap: "wrap", pointerEvents: "auto",
+      }}>
+        {Object.entries(COLORS).map(([type, color]) => (
+          <div key={type} onClick={() => dispatch({ type: "SET_FILTER", payload: type })}
+            style={{
+              display: "flex", alignItems: "center", gap: 4, cursor: "pointer",
+              opacity: filterType && filterType !== type ? 0.3 : 1,
+              transition: "opacity var(--transition)",
+            }}>
+            <span style={{
+              width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0,
+            }} />
+            <span style={{ fontSize: 9, color: "var(--text2)" }}>{TYPE_LABELS[type]}</span>
+          </div>
+        ))}
+        {filterType && (
+          <div onClick={() => dispatch({ type: "SET_FILTER", payload: null })}
+            style={{ fontSize: 9, color: "var(--accent)", cursor: "pointer" }}>Clear filter</div>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {totalNodes === 0 && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)", textAlign: "center",
+          color: "var(--muted)", pointerEvents: "none",
+        }}>
+          <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 16px" }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: "50%",
+              border: "1px solid rgba(42,191,172,0.15)",
+              animation: "pulseRing 3s ease-out infinite",
+            }} />
+          </div>
+          <div style={{ fontSize: 13 }}>Start talking — the conflict map</div>
+          <div style={{ fontSize: 13 }}>will build in real time.</div>
+        </div>
+      )}
+
+      <svg ref={svgRef} style={{ width: "100%", height: "100%", display: "block" }} />
+    </div>
+  );
 }
 
-// ── API Key ─────────────────────────────────────────────────
-async function checkApiKey() {
-  try {
-    const r = await fetch("/api/status");
-    if (r.ok) {
-      // Server is running, check if key is needed
-      // Always show key bar initially; user can connect without it if .env is set
-      document.getElementById("apiKeyBar").classList.remove("hidden");
-      connectWs();
-    }
-  } catch {
-    document.getElementById("apiKeyBar").classList.remove("hidden");
-  }
+/* ── Intelligence Dashboard (Right Panel) ───────────────────────── */
+function IntelPanel({ state, dispatch }) {
+  const { graphData, healthData, selectedNode, currentCase, partyHealth } = state;
+  const parties = currentCase?.parties || {};
+  const partyIds = Object.keys(parties);
+
+  const score = healthData?.score || 0;
+  const gaps = healthData?.gaps || [];
+  const ready = healthData?.ready || false;
+
+  const counts = graphData ? {
+    actors: (graphData.actors || []).length,
+    claims: (graphData.claims || []).length,
+    interests: (graphData.interests || []).length,
+    constraints: (graphData.constraints || []).length,
+    leverages: (graphData.leverages || []).length,
+    commitments: (graphData.commitments || []).length,
+    events: (graphData.events || []).length,
+    narratives: (graphData.narratives || []).length,
+  } : {};
+
+  const totalNodes = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalEdges = graphData ? (graphData.edges || []).length : 0;
+
+  // Humanize gaps
+  const humanizeGap = (gap) => {
+    return gap
+      .replace(/Actor '([^']+)' has no claims.*/, "Ask $1 about what they want or allege")
+      .replace(/Actor '([^']+)' has no interests.*/, "Explore $1's underlying needs")
+      .replace(/Actor '([^']+)' has no narrative.*/, "Understand how $1 frames the situation")
+      .replace(/No constraints identified.*/, "Any deadlines, legal limits, or budgets?")
+      .replace(/No leverage mapped.*/, "Who holds power in this situation?")
+      .replace(/No events recorded.*/, "What happened — key timeline events?")
+      .replace(/Need at least 2 actors.*/, "Who are the main people involved?");
+  };
+
+  // Advance phase handler
+  const advancePhase = async () => {
+    if (!currentCase) return;
+    try {
+      const r = await fetch(`/api/cases/${currentCase.case_id}/advance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const data = await r.json();
+      dispatch({ type: "UPDATE_CASE", payload: {
+        phase: data.current_phase,
+        parties: Object.fromEntries(
+          Object.entries(data.parties).map(([pid, ps]) => [pid, ps])
+        ),
+      }});
+      dispatch({ type: "SET_PHASE_OVERLAY", payload: data.current_phase });
+      setTimeout(() => dispatch({ type: "SET_PHASE_OVERLAY", payload: null }), 1500);
+    } catch {}
+  };
+
+  return (
+    <div style={{
+      width: 280, minWidth: 240, borderLeft: "1px solid var(--border)",
+      background: "var(--panel)", padding: 14, overflowY: "auto",
+      display: "flex", flexDirection: "column", gap: 18,
+    }}>
+      {/* Health */}
+      <div>
+        <h3 style={sectionHeaderStyle}>Health</h3>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+          <CircularProgress value={score} size={90} stroke={6} label="GRAPH" />
+        </div>
+        <div style={{ textAlign: "center", fontSize: 11, color: "var(--text2)" }}>
+          {totalNodes} nodes &middot; {totalEdges} edges
+        </div>
+        {ready && (
+          <div style={{
+            marginTop: 8, padding: "6px 10px", background: "rgba(107,191,138,0.1)",
+            border: "1px solid rgba(107,191,138,0.2)", borderRadius: "var(--radius)",
+            textAlign: "center", fontSize: 11, color: "var(--green)", fontWeight: 600,
+          }}>Ready for Resolution</div>
+        )}
+      </div>
+
+      {/* Primitives */}
+      <div>
+        <h3 style={sectionHeaderStyle}>Primitives</h3>
+        {Object.entries(COLORS).map(([type, color]) => {
+          const count = counts[type + "s"] || counts[type] || 0;
+          const maxCount = Math.max(...Object.values(counts).map(Number).filter(Boolean), 1);
+          return (
+            <div key={type} onClick={() => dispatch({ type: "SET_FILTER", payload: type })}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, padding: "4px 0",
+                cursor: "pointer", opacity: state.filterType && state.filterType !== type ? 0.4 : 1,
+                transition: "opacity var(--transition)",
+              }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", minWidth: 18, textAlign: "right" }}>
+                {count}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{TYPE_LABELS[type]}</span>
+              <div style={{
+                width: 40, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden",
+              }}>
+                <div style={{
+                  width: `${(count / maxCount) * 100}%`, height: "100%",
+                  background: color, borderRadius: 2,
+                  transition: "width 0.5s ease",
+                }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Gaps */}
+      {gaps.length > 0 && (
+        <div>
+          <h3 style={sectionHeaderStyle}>Gaps</h3>
+          {gaps.slice(0, 5).map((gap, i) => (
+            <div key={i} style={{
+              fontSize: 11, color: "var(--gold)", padding: "4px 0",
+              lineHeight: 1.4,
+            }}>
+              <span style={{ fontWeight: 700, marginRight: 4 }}>!</span>
+              {humanizeGap(gap)}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Parties */}
+      <div>
+        <h3 style={sectionHeaderStyle}>Parties</h3>
+        {partyIds.map((pid, i) => {
+          const p = parties[pid];
+          const ph = partyHealth[pid];
+          return (
+            <div key={pid} style={{
+              padding: "8px 10px", background: "var(--bg)",
+              borderRadius: "var(--radius)", marginBottom: 6,
+              border: pid === state.activePartyId ? "1px solid var(--accent-dim)" : "1px solid var(--border)",
+              transition: "border-color var(--transition)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <StatusDot status={p.status} />
+                <span style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{p.display_name}</span>
+                <span style={{ fontSize: 11, color: "var(--text2)" }}>{ph?.score || 0}%</span>
+              </div>
+              {ph && (
+                <div style={{
+                  marginTop: 4, height: 3, background: "var(--border)", borderRadius: 2,
+                  overflow: "hidden",
+                }}>
+                  <div style={{
+                    width: `${ph.score || 0}%`, height: "100%", borderRadius: 2,
+                    background: (ph.score || 0) >= 60 ? "var(--green)" : "var(--gold)",
+                    transition: "width 0.5s ease",
+                  }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Phase Advance Button */}
+      {currentCase && (
+        <div>
+          {currentCase.phase === "intake_party_1" && partyIds.length >= 2 && (
+            <button className="btn btn-secondary" style={{ width: "100%", fontSize: 11 }}
+              onClick={advancePhase}>
+              Switch to {parties[partyIds[1]]?.display_name || "Party 2"}
+            </button>
+          )}
+          {currentCase.phase === "intake_party_2" && (
+            <button className="btn btn-secondary" style={{ width: "100%", fontSize: 11 }}
+              onClick={advancePhase}>
+              Begin Joint Session
+            </button>
+          )}
+          {currentCase.phase === "joint_session" && (
+            <button className="btn btn-primary" style={{ width: "100%", fontSize: 11 }}
+              onClick={advancePhase}>
+              Move to Resolution
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Selected Node */}
+      {selectedNode && (
+        <div>
+          <h3 style={sectionHeaderStyle}>Selected Node</h3>
+          <div style={{
+            padding: "8px 10px", background: "var(--bg)",
+            borderRadius: "var(--radius)", border: "1px solid var(--border)",
+          }}>
+            <span style={{
+              fontSize: 9, fontWeight: 600, letterSpacing: 1,
+              textTransform: "uppercase", padding: "2px 8px", borderRadius: 8,
+              background: COLORS[selectedNode.type] || "#5a6577",
+              color: "#0a0a0f", display: "inline-block", marginBottom: 6,
+            }}>{TYPE_LABELS[selectedNode.type]}</span>
+
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+              {selectedNode.name || selectedNode.content || selectedNode.description || ""}
+            </div>
+
+            {(selectedNode.description || selectedNode.content) && selectedNode.name && (
+              <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4, marginBottom: 4 }}>
+                {selectedNode.description || selectedNode.content}
+              </div>
+            )}
+
+            <div style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.5 }}>
+              {selectedNode.contributed_by && selectedNode.contributed_by !== "default" && (
+                <div>From: {(() => {
+                  const p = parties[selectedNode.contributed_by];
+                  return p ? p.display_name : selectedNode.contributed_by;
+                })()}</div>
+              )}
+              {selectedNode.priority && <div>Priority: {selectedNode.priority}/5</div>}
+              {selectedNode.strength && <div>Strength: {selectedNode.strength}/5</div>}
+              {selectedNode.status && <div>Status: {selectedNode.status}</div>}
+              {selectedNode.date && <div>Date: {selectedNode.date}</div>}
+              {selectedNode.actor_type && <div>Type: {selectedNode.actor_type}</div>}
+              {selectedNode.role_in_conflict && <div>Role: {selectedNode.role_in_conflict}</div>}
+              {selectedNode.frames?.length > 0 && <div>Frames: {selectedNode.frames.join(", ")}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-async function setApiKey() {
-  const key = document.getElementById("apiKeyInput").value.trim();
-  if (!key) return;
-  try {
-    await fetch("/api/set-key", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key }),
-    });
-    document.getElementById("apiKeyBar").classList.add("hidden");
-    addSystemMessage("API key set. Ready to mediate.");
-  } catch {
-    addSystemMessage("Failed to set API key.");
-  }
-}
+const sectionHeaderStyle = {
+  fontSize: 10, fontWeight: 600, letterSpacing: 1.5,
+  color: "#5a6577", textTransform: "uppercase", marginBottom: 10,
+};
 
-// ── Chat Messages ───────────────────────────────────────────
-const messagesEl = document.getElementById("messages");
+/* ── Main Dashboard ─────────────────────────────────────────────── */
+function Dashboard({ state, dispatch }) {
+  const wsRef = useRef({});
+  const { currentCase, activePartyId } = state;
+  const parties = currentCase?.parties || {};
 
-function addUserMessage(text) {
-  const div = document.createElement("div");
-  div.className = "msg user";
-  div.textContent = text;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+  // Connect WebSocket for active party
+  useEffect(() => {
+    if (!currentCase || !activePartyId) return;
+    if (wsRef.current[activePartyId] && wsRef.current[activePartyId].readyState <= 1) return;
 
-function addAgentMessage(text, author) {
-  const div = document.createElement("div");
-  div.className = "msg agent";
-  const authorEl = document.createElement("div");
-  authorEl.className = "author";
-  authorEl.textContent = author || "concordia";
-  div.appendChild(authorEl);
-  const contentEl = document.createElement("div");
-  contentEl.textContent = text;
-  div.appendChild(contentEl);
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+    const caseId = currentCase.case_id;
+    const sessionId = `sess-${genId()}`;
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${location.host}/ws/${caseId}/${activePartyId}/${sessionId}`);
 
-function addSystemMessage(text) {
-  const div = document.createElement("div");
-  div.className = "msg system";
-  div.textContent = text;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+    ws.onopen = () => {
+      dispatch({ type: "ADD_MESSAGE", payload: {
+        partyId: activePartyId,
+        message: { type: "system", content: "Connected to CONCORDIA." },
+      }});
+    };
 
-// ── Tool Feed ───────────────────────────────────────────────
-const toolFeedEl = document.getElementById("toolFeed");
-
-function addToolEntry(tool, args) {
-  const div = document.createElement("div");
-  div.className = "tool-entry";
-  const argsStr = Object.entries(args || {})
-    .map(([k, v]) => `${k}="${String(v).slice(0, 30)}"`)
-    .join(" ");
-  div.innerHTML = `<span class="tool-name">${tool}</span> ${argsStr}`;
-  toolFeedEl.appendChild(div);
-  toolFeedEl.scrollTop = toolFeedEl.scrollHeight;
-}
-
-// ── Send Text ───────────────────────────────────────────────
-const textInput = document.getElementById("textInput");
-
-function sendText() {
-  const text = textInput.value.trim();
-  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-  addUserMessage(text);
-  ws.send(JSON.stringify({ type: "text", content: text }));
-  textInput.value = "";
-}
-
-textInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendText();
-  }
-});
-
-// ── Audio ───────────────────────────────────────────────────
-async function startAudio() {
-  try {
-    audioContext = new AudioContext({ sampleRate: 16000 });
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: { sampleRate: 16000, channelCount: 1 },
-    });
-    const source = audioContext.createMediaStreamSource(mediaStream);
-    processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-    processor.onaudioprocess = (e) => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        const float32 = e.inputBuffer.getChannelData(0);
-        const int16 = new Int16Array(float32.length);
-        for (let i = 0; i < float32.length; i++) {
-          int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+    ws.onclose = () => {
+      dispatch({ type: "ADD_MESSAGE", payload: {
+        partyId: activePartyId,
+        message: { type: "system", content: "Disconnected. Reconnecting..." },
+      }});
+      // Reconnect after delay
+      setTimeout(() => {
+        if (wsRef.current[activePartyId] === ws) {
+          delete wsRef.current[activePartyId];
+          // Force re-render to trigger reconnect
+          dispatch({ type: "SET_ACTIVE_PARTY", payload: activePartyId });
         }
-        ws.send(int16.buffer);
+      }, 2000);
+    };
+
+    ws.onmessage = (event) => {
+      if (typeof event.data === "string") {
+        try {
+          const msg = JSON.parse(event.data);
+          switch (msg.type) {
+            case "text":
+              dispatch({ type: "ADD_MESSAGE", payload: {
+                partyId: activePartyId,
+                message: { type: "agent", content: msg.content, author: msg.author },
+              }});
+              break;
+            case "tool_call":
+              dispatch({ type: "ADD_MESSAGE", payload: {
+                partyId: activePartyId,
+                message: { type: "tool", tool: msg.tool, args: msg.args },
+              }});
+              break;
+            case "graph_update":
+              dispatch({ type: "UPDATE_GRAPH", payload: msg.graph });
+              dispatch({ type: "UPDATE_HEALTH", payload: msg.health });
+              break;
+            case "system":
+              dispatch({ type: "ADD_MESSAGE", payload: {
+                partyId: activePartyId,
+                message: { type: "system", content: msg.content },
+              }});
+              break;
+            case "error":
+              dispatch({ type: "ADD_MESSAGE", payload: {
+                partyId: activePartyId,
+                message: { type: "error", content: msg.content },
+              }});
+              break;
+          }
+        } catch {}
       }
     };
 
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-    isRecording = true;
-    document.getElementById("micBtn").classList.add("recording");
-  } catch (err) {
-    addSystemMessage("Microphone access denied.");
-  }
+    wsRef.current[activePartyId] = ws;
+
+    return () => {
+      // Don't close on unmount to keep connection alive
+    };
+  }, [currentCase?.case_id, activePartyId]);
+
+  // Periodically refresh case data (for party health etc.)
+  useEffect(() => {
+    if (!currentCase) return;
+    const interval = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/cases/${currentCase.case_id}`);
+        const data = await r.json();
+        if (data.party_health) {
+          Object.entries(data.party_health).forEach(([pid, ph]) => {
+            dispatch({ type: "UPDATE_PARTY_HEALTH", payload: { partyId: pid, health: ph } });
+          });
+        }
+        if (data.phase && data.phase !== currentCase.phase) {
+          dispatch({ type: "UPDATE_CASE", payload: { phase: data.phase, parties: data.parties } });
+        }
+      } catch {}
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentCase?.case_id]);
+
+  return (
+    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <ChatPanel state={state} dispatch={dispatch} wsRef={wsRef} />
+      <GraphPanel state={state} dispatch={dispatch} />
+      <IntelPanel state={state} dispatch={dispatch} />
+    </div>
+  );
 }
 
-function stopAudio() {
-  if (processor) { processor.disconnect(); processor = null; }
-  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-  if (audioContext) { audioContext.close(); audioContext = null; }
-  isRecording = false;
-  document.getElementById("micBtn").classList.remove("recording");
-}
-
-function toggleMic() {
-  if (isRecording) { stopAudio(); }
-  else { startAudio(); }
-}
-
-// ── D3 Force Graph ──────────────────────────────────────────
-const svg = d3.select("#graphSvg");
-const graphPanel = document.getElementById("graphPanel");
-const tooltip = document.getElementById("tooltip");
-let simulation, linkGroup, nodeGroup, labelGroup;
-let currentNodes = [], currentLinks = [];
-
-function initGraph() {
-  const w = graphPanel.clientWidth;
-  const h = graphPanel.clientHeight;
-
-  svg.attr("viewBox", [0, 0, w, h]);
-
-  // Arrow marker
-  svg.append("defs").append("marker")
-    .attr("id", "arrow")
-    .attr("viewBox", "0 -4 8 8")
-    .attr("refX", 20)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-    .append("path")
-    .attr("d", "M0,-4L8,0L0,4")
-    .attr("fill", "#2a2a3e");
-
-  const g = svg.append("g").attr("class", "graph-root");
-
-  // Zoom
-  const zoom = d3.zoom()
-    .scaleExtent([0.2, 4])
-    .on("zoom", (e) => g.attr("transform", e.transform));
-  svg.call(zoom);
-
-  linkGroup = g.append("g").attr("class", "links");
-  nodeGroup = g.append("g").attr("class", "nodes");
-  labelGroup = g.append("g").attr("class", "labels");
-
-  simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(d => d.id).distance(90))
-    .force("charge", d3.forceManyBody().strength(-250))
-    .force("center", d3.forceCenter(w / 2, h / 2))
-    .force("collision", d3.forceCollide(30))
-    .on("tick", ticked);
-
-  simulation.stop();
-}
-
-function ticked() {
-  linkGroup.selectAll("line")
-    .attr("x1", d => d.source.x)
-    .attr("y1", d => d.source.y)
-    .attr("x2", d => d.target.x)
-    .attr("y2", d => d.target.y);
-
-  nodeGroup.selectAll("circle")
-    .attr("cx", d => d.x)
-    .attr("cy", d => d.y);
-
-  labelGroup.selectAll("text")
-    .attr("x", d => d.x)
-    .attr("y", d => d.y + (d.r || 12) + 14);
-}
-
-function updateGraph(data) {
-  if (!data) return;
-  graphData = data;
-
-  // Hide empty state
-  const emptyEl = document.getElementById("graphEmpty");
-  const totalNodes = (data.actors || []).length + (data.claims || []).length +
-    (data.interests || []).length + (data.constraints || []).length +
-    (data.leverages || []).length + (data.commitments || []).length +
-    (data.events || []).length + (data.narratives || []).length;
-  emptyEl.style.opacity = totalNodes > 0 ? "0" : "1";
-
-  // Build nodes
-  const nodes = [
-    ...(data.actors || []).map(n => ({ ...n, type: "actor", label: n.name, r: 18 })),
-    ...(data.claims || []).map(n => ({ ...n, type: "claim", label: (n.content || "").slice(0, 25), r: 12 })),
-    ...(data.interests || []).map(n => ({ ...n, type: "interest", label: (n.description || "").slice(0, 22), r: 11 })),
-    ...(data.constraints || []).map(n => ({ ...n, type: "constraint", label: (n.description || "").slice(0, 22), r: 11 })),
-    ...(data.leverages || []).map(n => ({ ...n, type: "leverage", label: (n.description || "").slice(0, 22), r: 12 })),
-    ...(data.commitments || []).map(n => ({ ...n, type: "commitment", label: (n.description || "").slice(0, 22), r: 10 })),
-    ...(data.events || []).map(n => ({ ...n, type: "event", label: (n.description || "").slice(0, 22), r: 11 })),
-    ...(data.narratives || []).map(n => ({ ...n, type: "narrative", label: (n.description || "").slice(0, 22), r: 11 })),
-  ];
-
-  const nodeIds = new Set(nodes.map(n => n.id));
-  const links = (data.edges || [])
-    .filter(e => nodeIds.has(e.source_id) && nodeIds.has(e.target_id))
-    .map(e => ({ source: e.source_id, target: e.target_id, rel: e.relationship }));
-
-  // Preserve positions from existing nodes
-  const oldMap = {};
-  currentNodes.forEach(n => { oldMap[n.id] = { x: n.x, y: n.y, vx: n.vx, vy: n.vy }; });
-  nodes.forEach(n => {
-    if (oldMap[n.id]) {
-      n.x = oldMap[n.id].x;
-      n.y = oldMap[n.id].y;
-      n.vx = oldMap[n.id].vx;
-      n.vy = oldMap[n.id].vy;
-    }
-  });
-
-  currentNodes = nodes;
-  currentLinks = links;
-
-  // Links
-  linkGroup.selectAll("line")
-    .data(links, d => d.source + "-" + d.target + "-" + d.rel)
-    .join(
-      enter => enter.append("line")
-        .attr("stroke", "#2a2a3e")
-        .attr("stroke-width", 1.2)
-        .attr("marker-end", "url(#arrow)")
-        .attr("opacity", 0)
-        .transition().duration(400).attr("opacity", 0.7),
-      update => update,
-      exit => exit.transition().duration(300).attr("opacity", 0).remove()
-    );
-
-  // Nodes
-  nodeGroup.selectAll("circle")
-    .data(nodes, d => d.id)
-    .join(
-      enter => enter.append("circle")
-        .attr("r", 0)
-        .attr("fill", d => COLORS[d.type] || "#5a6577")
-        .attr("stroke", d => COLORS[d.type] || "#5a6577")
-        .attr("stroke-width", 2)
-        .attr("fill-opacity", 0.2)
-        .attr("cursor", "pointer")
-        .on("mouseover", (e, d) => showTooltip(e, d))
-        .on("mouseout", hideTooltip)
-        .on("click", (e, d) => selectNode(d))
-        .call(d3.drag()
-          .on("start", dragStart)
-          .on("drag", dragging)
-          .on("end", dragEnd))
-        .transition().duration(500)
-        .attr("r", d => d.r),
-      update => update
-        .attr("fill", d => COLORS[d.type] || "#5a6577")
-        .attr("stroke", d => COLORS[d.type] || "#5a6577"),
-      exit => exit.transition().duration(300).attr("r", 0).remove()
-    );
-
-  // Labels
-  labelGroup.selectAll("text")
-    .data(nodes, d => d.id)
-    .join(
-      enter => enter.append("text")
-        .attr("text-anchor", "middle")
-        .attr("font-size", d => d.type === "actor" ? "10px" : "8px")
-        .attr("fill", d => COLORS[d.type] || "#5a6577")
-        .attr("fill-opacity", 0)
-        .text(d => {
-          const icon = TYPE_ICONS[d.type] || "";
-          return icon + " " + (d.label || "").slice(0, 25);
-        })
-        .transition().duration(500).attr("fill-opacity", 0.7),
-      update => update
-        .text(d => {
-          const icon = TYPE_ICONS[d.type] || "";
-          return icon + " " + (d.label || "").slice(0, 25);
-        }),
-      exit => exit.transition().duration(300).attr("fill-opacity", 0).remove()
-    );
-
-  // Update simulation
-  simulation.nodes(nodes);
-  simulation.force("link").links(links);
-  simulation.alpha(0.5).restart();
-}
-
-function dragStart(e, d) {
-  if (!e.active) simulation.alphaTarget(0.3).restart();
-  d.fx = d.x; d.fy = d.y;
-}
-function dragging(e, d) { d.fx = e.x; d.fy = e.y; }
-function dragEnd(e, d) {
-  if (!e.active) simulation.alphaTarget(0);
-  d.fx = null; d.fy = null;
-}
-
-function showTooltip(e, d) {
-  const fullText = d.name || d.content || d.description || d.label || "";
-  tooltip.textContent = `[${TYPE_LABELS[d.type]}] ${fullText}`;
-  tooltip.classList.add("visible");
-  tooltip.style.left = (e.pageX - graphPanel.getBoundingClientRect().left + 12) + "px";
-  tooltip.style.top = (e.pageY - graphPanel.getBoundingClientRect().top - 10) + "px";
-}
-function hideTooltip() { tooltip.classList.remove("visible"); }
-
-function selectNode(d) {
-  const detail = document.getElementById("nodeDetail");
-  detail.classList.add("visible");
-  const typeEl = document.getElementById("detailType");
-  typeEl.textContent = TYPE_LABELS[d.type] || d.type;
-  typeEl.style.background = COLORS[d.type] || "#5a6577";
-  typeEl.style.color = "#0a0a0f";
-  document.getElementById("detailName").textContent = d.name || d.content || d.description || "";
-  document.getElementById("detailDesc").textContent = d.description || d.content || "";
-
-  let meta = [];
-  if (d.priority) meta.push("Priority: " + d.priority);
-  if (d.strength) meta.push("Strength: " + d.strength);
-  if (d.status) meta.push("Status: " + d.status);
-  if (d.date) meta.push("Date: " + d.date);
-  if (d.frames && d.frames.length) meta.push("Frames: " + d.frames.join(", "));
-  if (d.actor_type) meta.push("Type: " + d.actor_type);
-  if (d.role_in_conflict) meta.push("Role: " + d.role_in_conflict);
-  if (d.contributed_by) meta.push("From: " + d.contributed_by);
-  document.getElementById("detailMeta").textContent = meta.join(" | ");
-}
-
-// ── Stats / Health ──────────────────────────────────────────
-function updateStats(data, health) {
-  if (!data) return;
-  const counts = {
-    actors: (data.actors || []).length,
-    claims: (data.claims || []).length,
-    interests: (data.interests || []).length,
-    constraints: (data.constraints || []).length,
-    leverages: (data.leverages || []).length,
-    commitments: (data.commitments || []).length,
-    events: (data.events || []).length,
-    narratives: (data.narratives || []).length,
+/* ── Phase Overlay ──────────────────────────────────────────────── */
+function PhaseOverlay({ phase }) {
+  const labels = {
+    intake_party_1: "Party 1 Intake",
+    intake_party_2: "Party 2 Intake",
+    joint_session: "Joint Session",
+    resolution: "Resolution",
   };
-
-  document.querySelectorAll(".stat-count[data-key]").forEach(el => {
-    const key = el.dataset.key;
-    if (counts[key] !== undefined) el.textContent = counts[key];
-  });
-
-  // Node count header
-  const totalNodes = Object.values(counts).reduce((a, b) => a + b, 0);
-  const totalEdges = (data.edges || []).length;
-  document.getElementById("nodeCount").textContent = `${totalNodes} nodes \u00B7 ${totalEdges} edges`;
-
-  // Gaps
-  const gapsEl = document.getElementById("gapsList");
-  if (health && health.gaps && health.gaps.length > 0) {
-    gapsEl.innerHTML = health.gaps.slice(0, 4).map(g =>
-      `<div class="gap-item">${g}</div>`
-    ).join("");
-  } else if (health && health.ready) {
-    gapsEl.innerHTML = '<span style="font-size:11px;color:var(--green)">Graph is ready for resolution</span>';
-  } else {
-    gapsEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No data yet</span>';
-  }
+  return (
+    <div className="phase-overlay">
+      <div className="phase-overlay-text">{labels[phase] || phase}</div>
+    </div>
+  );
 }
 
-function updateHealth(health) {
-  if (!health) return;
-  const score = health.score || 0;
-  document.getElementById("healthBarFill").style.width = score + "%";
-  document.getElementById("healthLabel").textContent = score + "%";
+/* ── App Root ───────────────────────────────────────────────────── */
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Phase badge (from graph data)
-  if (graphData && graphData.phase) {
-    const badge = document.getElementById("phaseBadge");
-    badge.textContent = graphData.phase.toUpperCase();
-    badge.style.background = PHASE_COLORS[graphData.phase] || "#5a6577";
-    badge.style.color = "#0a0a0f";
-  }
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <ApiKeyBar onSet={(k) => dispatch({ type: "SET_API_KEY", payload: k })} />
+
+      {state.view === "landing" ? (
+        <LandingPage dispatch={dispatch} cases={state.cases} />
+      ) : (
+        <Dashboard state={state} dispatch={dispatch} />
+      )}
+
+      {state.phaseOverlay && <PhaseOverlay phase={state.phaseOverlay} />}
+    </div>
+  );
 }
 
-// ── Init ────────────────────────────────────────────────────
-window.addEventListener("DOMContentLoaded", () => {
-  initGraph();
-  checkApiKey();
-});
-
-window.addEventListener("resize", () => {
-  const w = graphPanel.clientWidth;
-  const h = graphPanel.clientHeight;
-  svg.attr("viewBox", [0, 0, w, h]);
-  simulation.force("center", d3.forceCenter(w / 2, h / 2));
-  simulation.alpha(0.3).restart();
-});
+/* ── Mount ──────────────────────────────────────────────────────── */
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
