@@ -225,6 +225,8 @@ class ConflictGraph(BaseModel):
     escalation_level: EscalationLevel = EscalationLevel.LATENT
     phase: Phase = Phase.ARRIVE
 
+    parties: list[str] = Field(default_factory=list)
+
     actors: list[Actor] = Field(default_factory=list)
     claims: list[Claim] = Field(default_factory=list)
     interests: list[Interest] = Field(default_factory=list)
