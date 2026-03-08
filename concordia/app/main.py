@@ -863,6 +863,15 @@ async def serve_index():
     return HTMLResponse(content=_minimal_fallback_html(), status_code=200)
 
 
+@app.get("/demo")
+async def serve_demo():
+    """Serve the live auto-playing mediation demo."""
+    demo = static_dir / "demo.html"
+    if demo.exists():
+        return FileResponse(str(demo))
+    return FileResponse(str(static_dir / "index.html"))
+
+
 @app.get("/workbench")
 async def serve_workbench():
     """Serve the developer workbench."""
