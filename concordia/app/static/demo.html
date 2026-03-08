@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONCORDIA — Live Mediation Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #06060b;
+  --panel: #0d0d16;
+  --panel2: #12121f;
+  --border: #1a1a2e;
+  --border-glow: #2abfac33;
+  --text: #e8e8ed;
+  --text2: #8896a8;
+  --muted: #5a6577;
+  --accent: #2abfac;
+  --accent2: #1a8f7f;
+  --accent-glow: rgba(42, 191, 172, 0.12);
+  --red: #e85d5d;
+  --blue: #4ba3d1;
+  --gold: #e8b84d;
+  --green: #6bbf8a;
+  --purple: #b07fd0;
+  --orange: #e8864d;
+  --pink: #d07f9f;
+  --sarah-color: #4ba3d1;
+  --david-color: #e8864d;
+  --system-color: #2abfac;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+html, body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr 48px;
+  height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1px;
+}
+
+.phase-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent2);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  transition: all 0.5s ease;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 380px 1fr 320px;
+  overflow: hidden;
+}
+
+/* ── Conversation Panel ────────────────────────────────────────── */
+.conversation-panel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.conv-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.conv-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.speaker-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text2);
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--panel2);
+  transition: all 0.4s ease;
+}
+
+.speaker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: background 0.4s ease;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 3px; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.msg {
+  max-width: 92%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  animation: msg-appear 0.4s ease;
+  position: relative;
+}
+
+@keyframes msg-appear {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-sarah {
+  background: linear-gradient(135deg, #1a2a3d, #142235);
+  border: 1px solid #1e3a5a;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.msg-david {
+  background: linear-gradient(135deg, #2d1f14, #251a10);
+  border: 1px solid #3d2a1a;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.msg-system {
+  background: linear-gradient(135deg, #0d1f1a, #0a1a16);
+  border: 1px solid #1a3a30;
+  align-self: center;
+  max-width: 95%;
+  border-radius: 8px;
+}
+
+.msg-concordia {
+  background: linear-gradient(135deg, #141428, #10102a);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  align-self: flex-start;
+  max-width: 95%;
+}
+
+.msg-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-sarah .msg-label { color: var(--sarah-color); }
+.msg-david .msg-label { color: var(--david-color); }
+.msg-system .msg-label { color: var(--green); }
+.msg-concordia .msg-label { color: var(--accent); }
+
+.msg-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent2);
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--accent);
+  margin: 4px 4px 4px 0;
+  animation: tool-pop 0.3s ease;
+}
+
+@keyframes tool-pop {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  align-self: flex-start;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text2);
+  animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ── Graph Panel (Center) ──────────────────────────────────────── */
+.graph-panel {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.graph-overlay {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graph-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text2);
+  backdrop-filter: blur(8px);
+}
+
+.graph-stat-value {
+  font-weight: 600;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+
+.graph-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+svg { width: 100%; height: 100%; }
+
+.node-label {
+  font-family: var(--font);
+  font-size: 9px;
+  fill: var(--text2);
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+.edge-line {
+  stroke: var(--border);
+  stroke-width: 0.8;
+  opacity: 0.4;
+}
+
+.edge-label {
+  font-family: var(--mono);
+  font-size: 7px;
+  fill: var(--muted);
+  opacity: 0.6;
+}
+
+/* ── Right Panel ───────────────────────────────────────────────── */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  overflow-y: auto;
+}
+
+.info-panel::-webkit-scrollbar { width: 3px; }
+.info-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.info-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+
+/* Health Check */
+.health-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: all 0.5s ease;
+}
+
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.health-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.health-score {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--accent);
+  transition: all 0.5s ease;
+}
+
+.health-bar-bg {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+  transition: width 1s ease;
+  position: relative;
+}
+
+.health-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.health-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.health-check-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text2);
+  animation: check-appear 0.3s ease;
+}
+
+@keyframes check-appear {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.check-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+.check-pass { background: #1a3a2a; color: var(--green); }
+.check-fail { background: #3a1a1a; color: var(--red); }
+
+/* Escalation */
+.escalation-meter {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.esc-segment {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background 0.5s ease;
+}
+
+.esc-segment.active:nth-child(1) { background: var(--green); }
+.esc-segment.active:nth-child(2) { background: var(--gold); }
+.esc-segment.active:nth-child(3) { background: var(--orange); }
+.esc-segment.active:nth-child(4) { background: var(--red); }
+.esc-segment.active:nth-child(5) { background: #d03030; }
+
+.esc-label {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Graph Primitives Counter */
+.primitives-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.prim-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  transition: all 0.3s ease;
+}
+
+.prim-item.highlight {
+  border-color: var(--accent2);
+  background: var(--accent-glow);
+}
+
+.prim-label { color: var(--text2); }
+
+.prim-count {
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+/* Resolution Cards */
+.resolution-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: card-appear 0.6s ease;
+  transition: all 0.3s ease;
+}
+
+.resolution-card:hover {
+  border-color: var(--accent2);
+  transform: translateY(-1px);
+}
+
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.resolution-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resolution-body {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text2);
+  margin-bottom: 10px;
+}
+
+.resolution-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.res-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.res-tag-sarah { background: #1a2a3d; color: var(--sarah-color); }
+.res-tag-david { background: #2d1f14; color: var(--david-color); }
+.res-tag-shared { background: #0d1f1a; color: var(--green); }
+
+/* Common Ground */
+.common-ground-item {
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #0d1f1a, #0a1a16);
+  border: 1px solid #1a3a30;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  animation: card-appear 0.5s ease;
+}
+
+.common-ground-item .cg-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+
+.common-ground-item .cg-desc {
+  color: var(--text2);
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.demo-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.demo-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text2);
+  font-size: 11px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demo-btn:hover {
+  border-color: var(--accent2);
+  color: var(--accent);
+}
+
+.demo-btn-primary {
+  background: var(--accent2);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.demo-btn-primary:hover {
+  background: var(--accent);
+}
+
+.progress-bar {
+  flex: 1;
+  max-width: 300px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+/* ── Particle Background ───────────────────────────────────────── */
+.particles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* ── Node appear animation ─────────────────────────────────────── */
+@keyframes node-appear {
+  from { r: 0; opacity: 0; }
+  to { opacity: 1; }
+}
+
+.graph-node {
+  animation: node-appear 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .main { grid-template-columns: 320px 1fr 280px; }
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .graph-panel, .info-panel { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div>
+        <div class="logo">CONCORDIA</div>
+        <div class="logo-sub">AI Conflict Mediation Engine</div>
+      </div>
+      <div class="phase-badge" id="phaseBadge">
+        <div class="phase-dot"></div>
+        <span id="phaseText">Initializing</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="font-size:11px;color:var(--text2);">
+        Case: <span style="color:var(--gold);">Chen-Martinez Estate Dispute</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">DEMO MODE</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Conversation -->
+    <div class="conversation-panel">
+      <div class="conv-header">
+        <div class="conv-title">Mediation Session</div>
+        <div class="speaker-indicator" id="speakerIndicator">
+          <div class="speaker-dot" id="speakerDot"></div>
+          <span id="speakerName">Starting...</span>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+    </div>
+
+    <!-- Graph -->
+    <div class="graph-panel" id="graphPanel">
+      <div class="graph-overlay" id="graphOverlay">
+        <div class="graph-stat">
+          Nodes: <span class="graph-stat-value" id="nodeCount">0</span>
+        </div>
+        <div class="graph-stat">
+          Edges: <span class="graph-stat-value" id="edgeCount">0</span>
+        </div>
+      </div>
+      <svg id="graphSvg"></svg>
+      <div class="graph-legend" id="graphLegend"></div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="infoPanel">
+      <!-- Health Section -->
+      <div class="info-section">
+        <div class="info-section-title">Case Health</div>
+        <div class="health-card" id="healthCard">
+          <div class="health-header">
+            <span class="health-label">Completeness</span>
+            <span class="health-score" id="healthScore">0%</span>
+          </div>
+          <div class="health-bar-bg">
+            <div class="health-bar-fill" id="healthBar" style="width:0%"></div>
+          </div>
+          <div class="health-checks" id="healthChecks"></div>
+        </div>
+      </div>
+
+      <!-- Escalation Section -->
+      <div class="info-section">
+        <div class="info-section-title">Escalation Level</div>
+        <div class="escalation-meter" id="escalationMeter">
+          <div class="esc-segment"></div>
+          <div class="esc-segment"></div>
+          <div class="esc-segment"></div>
+          <div class="esc-segment"></div>
+          <div class="esc-segment"></div>
+        </div>
+        <div class="esc-label" id="escLabel">Latent</div>
+      </div>
+
+      <!-- Primitives Section -->
+      <div class="info-section">
+        <div class="info-section-title">Knowledge Graph</div>
+        <div class="primitives-grid" id="primitivesGrid">
+          <div class="prim-item"><span class="prim-label">Actors</span><span class="prim-count" id="pActors">0</span></div>
+          <div class="prim-item"><span class="prim-label">Claims</span><span class="prim-count" id="pClaims">0</span></div>
+          <div class="prim-item"><span class="prim-label">Interests</span><span class="prim-count" id="pInterests">0</span></div>
+          <div class="prim-item"><span class="prim-label">Constraints</span><span class="prim-count" id="pConstraints">0</span></div>
+          <div class="prim-item"><span class="prim-label">Leverage</span><span class="prim-count" id="pLeverage">0</span></div>
+          <div class="prim-item"><span class="prim-label">Events</span><span class="prim-count" id="pEvents">0</span></div>
+          <div class="prim-item"><span class="prim-label">Narratives</span><span class="prim-count" id="pNarratives">0</span></div>
+          <div class="prim-item"><span class="prim-label">Commitments</span><span class="prim-count" id="pCommitments">0</span></div>
+        </div>
+      </div>
+
+      <!-- Common Ground (appears later) -->
+      <div class="info-section" id="commonGroundSection" style="display:none;">
+        <div class="info-section-title">Common Ground Found</div>
+        <div id="commonGroundItems"></div>
+      </div>
+
+      <!-- Resolution (appears later) -->
+      <div class="info-section" id="resolutionSection" style="display:none;">
+        <div class="info-section-title">Resolution Paths</div>
+        <div id="resolutionCards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span>Powered by</span>
+      <span style="color:var(--accent);font-weight:600;">CONCORDIA</span>
+      <span style="color:var(--muted);">×</span>
+      <span style="color:var(--gold);">tacitus.me</span>
+    </div>
+    <div class="demo-controls">
+      <button class="demo-btn" id="btnRestart" onclick="restartDemo()">↻ Restart</button>
+      <button class="demo-btn" id="btnPause" onclick="togglePause()">⏸ Pause</button>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <button class="demo-btn demo-btn-primary" id="btnSpeed" onclick="cycleSpeed()">1×</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;">
+      <span id="stepCounter">0</span> / <span id="totalSteps">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONCORDIA Live Demo Engine
+// ═══════════════════════════════════════════════════════════════════
+
+// ── State ──────────────────────────────────────────────────────────
+const state = {
+  nodes: [],
+  edges: [],
+  step: 0,
+  paused: false,
+  speed: 1,
+  timer: null,
+  counts: { actors: 0, claims: 0, interests: 0, constraints: 0, leverage: 0, events: 0, narratives: 0, commitments: 0, edges: 0 },
+  healthScore: 0,
+  healthChecks: {},
+  escalation: 0,
+  phase: 'arrive',
+};
+
+// ── Color map for node types ───────────────────────────────────────
+const nodeColors = {
+  actor: '#4ba3d1',
+  claim: '#e85d5d',
+  interest: '#6bbf8a',
+  constraint: '#e8b84d',
+  leverage: '#b07fd0',
+  event: '#e8864d',
+  narrative: '#d07f9f',
+  commitment: '#4ba3d1',
+};
+
+const nodeRadius = {
+  actor: 14,
+  claim: 9,
+  interest: 10,
+  constraint: 8,
+  leverage: 9,
+  event: 8,
+  narrative: 9,
+  commitment: 8,
+};
+
+// ── Graph Legend ───────────────────────────────────────────────────
+function initLegend() {
+  const legend = document.getElementById('graphLegend');
+  const types = [
+    ['actor', 'Actors'], ['claim', 'Claims'], ['interest', 'Interests'],
+    ['constraint', 'Constraints'], ['leverage', 'Leverage'], ['event', 'Events'],
+    ['narrative', 'Narratives'], ['commitment', 'Commitments']
+  ];
+  types.forEach(([type, label]) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${nodeColors[type]}"></div>${label}`;
+    legend.appendChild(item);
+  });
+}
+
+// ── D3 Force Graph ─────────────────────────────────────────────────
+let simulation, svg, linkGroup, nodeGroup, labelGroup;
+
+function initGraph() {
+  const panel = document.getElementById('graphPanel');
+  const width = panel.clientWidth;
+  const height = panel.clientHeight;
+
+  svg = d3.select('#graphSvg');
+  svg.selectAll('*').remove();
+
+  // Background grid
+  const defs = svg.append('defs');
+  const pattern = defs.append('pattern')
+    .attr('id', 'grid').attr('width', 40).attr('height', 40)
+    .attr('patternUnits', 'userSpaceOnUse');
+  pattern.append('path')
+    .attr('d', 'M 40 0 L 0 0 0 40')
+    .attr('fill', 'none').attr('stroke', '#111120').attr('stroke-width', 0.5);
+  svg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', 'url(#grid)');
+
+  // Glow filter
+  const filter = defs.append('filter').attr('id', 'glow');
+  filter.append('feGaussianBlur').attr('stdDeviation', 3).attr('result', 'blur');
+  filter.append('feMerge').selectAll('feMergeNode')
+    .data(['blur', 'SourceGraphic']).enter()
+    .append('feMergeNode').attr('in', d => d);
+
+  linkGroup = svg.append('g').attr('class', 'links');
+  nodeGroup = svg.append('g').attr('class', 'nodes');
+  labelGroup = svg.append('g').attr('class', 'labels');
+
+  simulation = d3.forceSimulation()
+    .force('link', d3.forceLink().id(d => d.id).distance(80).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-120))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => (nodeRadius[d.type] || 8) + 10))
+    .force('x', d3.forceX(width / 2).strength(0.03))
+    .force('y', d3.forceY(height / 2).strength(0.03))
+    .alphaDecay(0.01)
+    .on('tick', ticked);
+}
+
+function ticked() {
+  linkGroup.selectAll('line')
+    .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+  nodeGroup.selectAll('circle')
+    .attr('cx', d => d.x).attr('cy', d => d.y);
+  labelGroup.selectAll('text')
+    .attr('x', d => d.x).attr('y', d => d.y + (nodeRadius[d.type] || 8) + 12);
+}
+
+function addGraphNode(node) {
+  state.nodes.push(node);
+  updateGraph();
+}
+
+function addGraphEdge(edge) {
+  // Only add if both nodes exist
+  const sourceExists = state.nodes.find(n => n.id === edge.source);
+  const targetExists = state.nodes.find(n => n.id === edge.target);
+  if (sourceExists && targetExists) {
+    state.edges.push(edge);
+    updateGraph();
+  }
+}
+
+function updateGraph() {
+  // Update links
+  const links = linkGroup.selectAll('line').data(state.edges, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
+  links.enter().append('line')
+    .attr('class', 'edge-line')
+    .attr('stroke', d => {
+      const rel = d.relationship || '';
+      if (rel.includes('CLAIM')) return '#e85d5d44';
+      if (rel.includes('INTEREST')) return '#6bbf8a44';
+      if (rel.includes('LEVERAGE')) return '#b07fd044';
+      return '#1a1a2e';
+    })
+    .attr('stroke-width', 0.8)
+    .attr('opacity', 0)
+    .transition().duration(500).attr('opacity', 0.5);
+  links.exit().remove();
+
+  // Update nodes
+  const nodes = nodeGroup.selectAll('circle').data(state.nodes, d => d.id);
+  nodes.enter().append('circle')
+    .attr('class', 'graph-node')
+    .attr('r', 0)
+    .attr('fill', d => nodeColors[d.type] || '#888')
+    .attr('stroke', d => nodeColors[d.type] || '#888')
+    .attr('stroke-width', 2)
+    .attr('stroke-opacity', 0.3)
+    .attr('fill-opacity', 0.7)
+    .attr('filter', 'url(#glow)')
+    .style('cursor', 'pointer')
+    .on('mouseover', function(event, d) {
+      d3.select(this).transition().duration(200).attr('r', (nodeRadius[d.type] || 8) * 1.4).attr('fill-opacity', 1);
+    })
+    .on('mouseout', function(event, d) {
+      d3.select(this).transition().duration(200).attr('r', nodeRadius[d.type] || 8).attr('fill-opacity', 0.7);
+    })
+    .transition().duration(600)
+    .attr('r', d => nodeRadius[d.type] || 8);
+  nodes.exit().remove();
+
+  // Update labels
+  const labels = labelGroup.selectAll('text').data(state.nodes, d => d.id);
+  labels.enter().append('text')
+    .attr('class', 'node-label')
+    .text(d => d.label.length > 16 ? d.label.substring(0, 14) + '…' : d.label)
+    .attr('opacity', 0)
+    .transition().duration(600).attr('opacity', 1);
+  labels.exit().remove();
+
+  // Update simulation
+  simulation.nodes(state.nodes);
+  simulation.force('link').links(state.edges);
+  simulation.alpha(0.4).restart();
+
+  // Update counters
+  document.getElementById('nodeCount').textContent = state.nodes.length;
+  document.getElementById('edgeCount').textContent = state.edges.length;
+}
+
+// ── UI Updates ─────────────────────────────────────────────────────
+function addMessage(type, label, text, tools) {
+  const messages = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg msg-${type}`;
+  let html = `<div class="msg-label">${label}</div>`;
+  html += `<div>${text}</div>`;
+  if (tools && tools.length) {
+    html += '<div style="margin-top:6px;">';
+    tools.forEach(t => { html += `<span class="msg-tool">⚡ ${t}</span>`; });
+    html += '</div>';
+  }
+  div.innerHTML = html;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function setSpeaker(name, color) {
+  document.getElementById('speakerName').textContent = name;
+  document.getElementById('speakerDot').style.background = color;
+}
+
+function setPhase(text) {
+  document.getElementById('phaseText').textContent = text;
+}
+
+function updatePrimitives(key, value) {
+  state.counts[key] = value;
+  const el = document.getElementById('p' + key.charAt(0).toUpperCase() + key.slice(1));
+  if (el) {
+    el.textContent = value;
+    el.closest('.prim-item').classList.add('highlight');
+    setTimeout(() => el.closest('.prim-item').classList.remove('highlight'), 1500);
+  }
+}
+
+function updateHealth(score, checks) {
+  state.healthScore = score;
+  state.healthChecks = checks;
+  document.getElementById('healthScore').textContent = score + '%';
+  document.getElementById('healthBar').style.width = score + '%';
+
+  // Color coding
+  const scoreEl = document.getElementById('healthScore');
+  if (score >= 75) scoreEl.style.color = '#6bbf8a';
+  else if (score >= 50) scoreEl.style.color = '#e8b84d';
+  else scoreEl.style.color = '#e85d5d';
+
+  // Checks
+  const checksEl = document.getElementById('healthChecks');
+  checksEl.innerHTML = '';
+  for (const [key, val] of Object.entries(checks)) {
+    const item = document.createElement('div');
+    item.className = 'health-check-item';
+    const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    item.innerHTML = `<span class="check-icon ${val ? 'check-pass' : 'check-fail'}">${val ? '✓' : '✗'}</span>${label}`;
+    checksEl.appendChild(item);
+  }
+}
+
+function setEscalation(level) {
+  const levels = ['latent', 'emerging', 'escalating', 'crisis', 'destructive'];
+  const idx = levels.indexOf(level);
+  state.escalation = idx;
+  const segments = document.querySelectorAll('.esc-segment');
+  segments.forEach((seg, i) => {
+    seg.classList.toggle('active', i <= idx);
+  });
+  document.getElementById('escLabel').textContent = level.charAt(0).toUpperCase() + level.slice(1);
+}
+
+function showCommonGround(items) {
+  const section = document.getElementById('commonGroundSection');
+  const container = document.getElementById('commonGroundItems');
+  section.style.display = 'block';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'common-ground-item';
+    div.innerHTML = `<div class="cg-type">${item.type}</div><div class="cg-desc">${item.desc}</div>`;
+    container.appendChild(div);
+  });
+}
+
+function showResolution(cards) {
+  const section = document.getElementById('resolutionSection');
+  const container = document.getElementById('resolutionCards');
+  section.style.display = 'block';
+  cards.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'resolution-card';
+    let tagsHtml = '';
+    (card.tags || []).forEach(t => {
+      const cls = t.for === 'sarah' ? 'res-tag-sarah' : t.for === 'david' ? 'res-tag-david' : 'res-tag-shared';
+      tagsHtml += `<span class="res-tag ${cls}">${t.label}</span>`;
+    });
+    div.innerHTML = `
+      <div class="resolution-title">${card.icon || '◈'} ${card.title}</div>
+      <div class="resolution-body">${card.body}</div>
+      <div class="resolution-tags">${tagsHtml}</div>`;
+    container.appendChild(div);
+  });
+}
+
+// ── Demo Script ────────────────────────────────────────────────────
+// The full auto-playing mediation scenario
+const script = [
+  // ── PHASE 0: Opening ──
+  { delay: 800, action: () => {
+    setPhase('Intake — Party A');
+    setSpeaker('CONCORDIA', '#2abfac');
+    addMessage('concordia', '◈ CONCORDIA', 'Welcome to CONCORDIA. I\'m here to help you work through this. Everything you share stays confidential in this session. Tell me — what\'s going on?');
+  }},
+
+  // ── Sarah speaks ──
+  { delay: 2200, action: () => {
+    setSpeaker('Sarah (Elder Sibling)', '#4ba3d1');
+    addMessage('sarah', '● Sarah', 'My dad passed away 6 months ago. He left the family restaurant to both me and my brother David equally in his will. But I\'ve been running it for 8 years while David was living in another city.');
+  }},
+
+  // Tools fire silently
+  { delay: 1800, action: () => {
+    const n1 = { id: 'actor_sarah', type: 'actor', label: 'Sarah' };
+    const n2 = { id: 'actor_david', type: 'actor', label: 'David' };
+    const n3 = { id: 'actor_father', type: 'actor', label: 'Father (deceased)' };
+    addGraphNode(n1); addGraphNode(n2); addGraphNode(n3);
+    updatePrimitives('actors', 3);
+
+    const e1 = { id: 'event_death', type: 'event', label: 'Father passed away' };
+    addGraphNode(e1);
+    addGraphEdge({ source: 'actor_father', target: 'event_death', relationship: 'INVOLVED_IN' });
+    addGraphEdge({ source: 'actor_sarah', target: 'event_death', relationship: 'INVOLVED_IN' });
+    addGraphEdge({ source: 'actor_david', target: 'event_death', relationship: 'INVOLVED_IN' });
+    updatePrimitives('events', 1);
+
+    addMessage('concordia', '◈ CONCORDIA', 'I\'m sorry about your father. Eight years running the restaurant — that\'s a huge commitment. What happened when the will was read?', ['add_actor ×3', 'add_event']);
+  }},
+
+  { delay: 2500, action: () => {
+    addMessage('sarah', '● Sarah', 'The will says 50/50. But that doesn\'t feel right. I gave up a corporate career to keep it alive through COVID. I personally guaranteed a $200K renovation loan. I worked 70-hour weeks. Now David wants to sell and split everything evenly.');
+  }},
+
+  { delay: 1600, action: () => {
+    const c1 = { id: 'claim_sarah_1', type: 'claim', label: 'Wants ≥70% share' };
+    const c2 = { id: 'claim_sarah_2', type: 'claim', label: 'Sweat equity unrecognized' };
+    addGraphNode(c1); addGraphNode(c2);
+    addGraphEdge({ source: 'actor_sarah', target: 'claim_sarah_1', relationship: 'MAKES_CLAIM' });
+    addGraphEdge({ source: 'actor_sarah', target: 'claim_sarah_2', relationship: 'MAKES_CLAIM' });
+    updatePrimitives('claims', 2);
+
+    const i1 = { id: 'interest_sarah_1', type: 'interest', label: 'Recognition of sacrifice' };
+    const i2 = { id: 'interest_sarah_2', type: 'interest', label: 'Financial fairness' };
+    addGraphNode(i1); addGraphNode(i2);
+    addGraphEdge({ source: 'actor_sarah', target: 'interest_sarah_1', relationship: 'HAS_INTEREST' });
+    addGraphEdge({ source: 'actor_sarah', target: 'interest_sarah_2', relationship: 'HAS_INTEREST' });
+    updatePrimitives('interests', 2);
+
+    addMessage('concordia', '◈ CONCORDIA', 'So you gave up another path to keep your father\'s legacy alive, and now you feel like that sacrifice isn\'t reflected in a straight 50/50 split. That\'s understandable. What would a fair outcome look like to you?', ['add_claim ×2', 'add_interest ×2']);
+  }},
+
+  { delay: 2400, action: () => {
+    addMessage('sarah', '● Sarah', 'I want either 70% ownership or David\'s share bought out at the pre-renovation value. And the family recipes should stay with whoever keeps the restaurant — they\'re Dad\'s legacy. Mom agrees I should get more, but she won\'t say it publicly.');
+  }},
+
+  { delay: 1500, action: () => {
+    const n1 = { id: 'actor_mother', type: 'actor', label: 'Mother' };
+    addGraphNode(n1);
+    updatePrimitives('actors', 4);
+
+    const c3 = { id: 'claim_sarah_3', type: 'claim', label: 'Buyout at pre-reno value' };
+    addGraphNode(c3);
+    addGraphEdge({ source: 'actor_sarah', target: 'claim_sarah_3', relationship: 'MAKES_CLAIM' });
+    addGraphEdge({ source: 'claim_sarah_3', target: 'actor_david', relationship: 'CLAIM_TARGETS' });
+    updatePrimitives('claims', 3);
+
+    const i3 = { id: 'interest_sarah_3', type: 'interest', label: 'Preserve family legacy' };
+    addGraphNode(i3);
+    addGraphEdge({ source: 'actor_sarah', target: 'interest_sarah_3', relationship: 'HAS_INTEREST' });
+    updatePrimitives('interests', 3);
+
+    const lev1 = { id: 'lev_sarah_1', type: 'leverage', label: 'Operational knowledge' };
+    addGraphNode(lev1);
+    addGraphEdge({ source: 'actor_sarah', target: 'lev_sarah_1', relationship: 'HOLDS_LEVERAGE' });
+    addGraphEdge({ source: 'lev_sarah_1', target: 'actor_david', relationship: 'LEVERAGE_OVER' });
+    updatePrimitives('leverage', 1);
+
+    addMessage('concordia', '◈ CONCORDIA', 'The recipes, the legacy — it sounds like this isn\'t just about money. There\'s a deeper connection to your father\'s memory here. How has your relationship with David been through all this?', ['add_actor', 'add_claim', 'add_interest', 'add_leverage']);
+  }},
+
+  { delay: 2200, action: () => {
+    addMessage('sarah', '● Sarah', 'Honestly? It\'s strained. He left because there wasn\'t room for both of us, and I made it clear I was in charge. But I was the one who stepped up. He didn\'t even come back for the renovation. Now he just wants his check.');
+  }},
+
+  { delay: 1500, action: () => {
+    const narr = { id: 'narr_sarah', type: 'narrative', label: 'Sarah: sacrifice & resentment' };
+    addGraphNode(narr);
+    addGraphEdge({ source: 'actor_sarah', target: 'narr_sarah', relationship: 'HOLDS_NARRATIVE' });
+    updatePrimitives('narratives', 1);
+
+    const e2 = { id: 'event_reno', type: 'event', label: '$200K renovation' };
+    addGraphNode(e2);
+    addGraphEdge({ source: 'actor_sarah', target: 'event_reno', relationship: 'INVOLVED_IN' });
+    updatePrimitives('events', 2);
+
+    const con1 = { id: 'con_loan', type: 'constraint', label: '$200K loan guarantee' };
+    addGraphNode(con1);
+    addGraphEdge({ source: 'con_loan', target: 'actor_sarah', relationship: 'CONSTRAINS' });
+    updatePrimitives('constraints', 1);
+
+    setEscalation('emerging');
+
+    addMessage('concordia', '◈ CONCORDIA', 'That\'s a lot of tension. The feeling of having carried the weight alone while someone else expects an equal share — that\'s real. Let me check where we stand on understanding your perspective.', ['add_narrative', 'add_event', 'add_constraint']);
+  }},
+
+  // ── Health Check — Sarah ──
+  { delay: 1800, action: () => {
+    setPhase('Health Check — Sarah');
+    updateHealth(50, {
+      'has_actors': true,
+      'has_claims': true,
+      'has_interests': true,
+      'has_constraints': true,
+      'has_events': true,
+      'has_narratives': true,
+    });
+    addMessage('system', '⬡ HEALTH CHECK', 'Sarah\'s intake: <strong>Score 83%</strong> — Strong foundation. We have actors, claims, interests, constraints, events, and her narrative. Good enough to proceed.', []);
+  }},
+
+  // ── CONCORDIA asks targeted follow-up ──
+  { delay: 2000, action: () => {
+    setPhase('Follow-up — Sarah');
+    setSpeaker('CONCORDIA', '#2abfac');
+    addMessage('concordia', '◈ CONCORDIA', 'Before we bring David in — one more thing. You mentioned the $200K loan. Is that still outstanding? And are there any legal constraints we should know about — the will, any deadlines?');
+  }},
+
+  { delay: 2200, action: () => {
+    setSpeaker('Sarah (Elder Sibling)', '#4ba3d1');
+    addMessage('sarah', '● Sarah', 'The loan has $140K left. It\'s in my name. The probate process gives us 12 months to settle the estate — we have about 6 months left. My lawyer says the will is clear on 50/50 but sweat equity claims are possible.');
+  }},
+
+  { delay: 1400, action: () => {
+    const con2 = { id: 'con_probate', type: 'constraint', label: '6-month probate deadline' };
+    const con3 = { id: 'con_legal', type: 'constraint', label: 'Will says 50/50' };
+    addGraphNode(con2); addGraphNode(con3);
+    addGraphEdge({ source: 'con_probate', target: 'actor_sarah', relationship: 'CONSTRAINS' });
+    addGraphEdge({ source: 'con_probate', target: 'actor_david', relationship: 'CONSTRAINS' });
+    addGraphEdge({ source: 'con_legal', target: 'actor_sarah', relationship: 'CONSTRAINS' });
+    addGraphEdge({ source: 'con_legal', target: 'actor_david', relationship: 'CONSTRAINS' });
+    updatePrimitives('constraints', 3);
+
+    const comm1 = { id: 'comm_will', type: 'commitment', label: 'Father\'s will: 50/50' };
+    addGraphNode(comm1);
+    addGraphEdge({ source: 'actor_father', target: 'comm_will', relationship: 'COMMITTED_TO' });
+    updatePrimitives('commitments', 1);
+
+    addMessage('concordia', '◈ CONCORDIA', 'That\'s helpful — a clear legal framework with a time constraint. OK Sarah, I have a solid picture of your perspective. Let me talk to David now. Remember, I won\'t share what you\'ve told me directly.', ['add_constraint ×2', 'add_commitment']);
+  }},
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── PHASE 2: David's Intake ──
+  // ══════════════════════════════════════════════════════════════════
+  { delay: 2500, action: () => {
+    setPhase('Intake — Party B');
+    setSpeaker('CONCORDIA', '#2abfac');
+    addMessage('system', '⬡ SYSTEM', 'Session switching to <strong>David (Younger Sibling)</strong>. Sarah\'s data is preserved. Confidentiality maintained.', []);
+  }},
+
+  { delay: 1800, action: () => {
+    addMessage('concordia', '◈ CONCORDIA', 'Hi David. I\'m CONCORDIA — I\'m here to listen and help both of you find a path forward. I have some background on the situation, but I want to hear your perspective. What\'s going on from your side?');
+  }},
+
+  { delay: 2600, action: () => {
+    setSpeaker('David (Younger Sibling)', '#e8864d');
+    addMessage('david', '● David', 'Look, the will says 50/50, and that\'s what Dad wanted. I appreciate what Sarah did, but she chose to work there — nobody forced her. She drew a salary the whole time. I moved away because she made it clear there wasn\'t room for me.');
+  }},
+
+  { delay: 1600, action: () => {
+    const c4 = { id: 'claim_david_1', type: 'claim', label: 'Will should be honored' };
+    const c5 = { id: 'claim_david_2', type: 'claim', label: 'Sarah chose this voluntarily' };
+    addGraphNode(c4); addGraphNode(c5);
+    addGraphEdge({ source: 'actor_david', target: 'claim_david_1', relationship: 'MAKES_CLAIM' });
+    addGraphEdge({ source: 'actor_david', target: 'claim_david_2', relationship: 'MAKES_CLAIM' });
+    addGraphEdge({ source: 'claim_david_2', target: 'actor_sarah', relationship: 'CLAIM_TARGETS' });
+    updatePrimitives('claims', 5);
+
+    addMessage('concordia', '◈ CONCORDIA', 'So from your view, the will is Dad\'s final word, and Sarah made her own choices. You also felt there wasn\'t space for you in the business. What happened when you tried to be involved?', ['add_claim ×2']);
+  }},
+
+  { delay: 2400, action: () => {
+    addMessage('david', '● David', 'Every time I suggested something, she shut it down. "You don\'t understand the business." She gatekept everything. So I built my own career elsewhere. Now I have a family — a daughter who\'s 3 — and I need my inheritance to buy a house.');
+  }},
+
+  { delay: 1500, action: () => {
+    const i4 = { id: 'interest_david_1', type: 'interest', label: 'Housing for family' };
+    const i5 = { id: 'interest_david_2', type: 'interest', label: 'Respect & recognition' };
+    const i6 = { id: 'interest_david_3', type: 'interest', label: 'Honor father\'s wishes' };
+    addGraphNode(i4); addGraphNode(i5); addGraphNode(i6);
+    addGraphEdge({ source: 'actor_david', target: 'interest_david_1', relationship: 'HAS_INTEREST' });
+    addGraphEdge({ source: 'actor_david', target: 'interest_david_2', relationship: 'HAS_INTEREST' });
+    addGraphEdge({ source: 'actor_david', target: 'interest_david_3', relationship: 'HAS_INTEREST' });
+    updatePrimitives('interests', 6);
+
+    const narr2 = { id: 'narr_david', type: 'narrative', label: 'David: excluded & sidelined' };
+    addGraphNode(narr2);
+    addGraphEdge({ source: 'actor_david', target: 'narr_david', relationship: 'HOLDS_NARRATIVE' });
+    updatePrimitives('narratives', 2);
+
+    const e3 = { id: 'event_excluded', type: 'event', label: 'David pushed out of business' };
+    addGraphNode(e3);
+    addGraphEdge({ source: 'actor_david', target: 'event_excluded', relationship: 'INVOLVED_IN' });
+    addGraphEdge({ source: 'actor_sarah', target: 'event_excluded', relationship: 'INVOLVED_IN' });
+    updatePrimitives('events', 3);
+
+    addMessage('concordia', '◈ CONCORDIA', 'Feeling excluded from something that was also yours — and your father\'s — that\'s painful. The housing need is concrete and urgent. You mentioned you\'ve offered Sarah something?', ['add_interest ×3', 'add_narrative', 'add_event']);
+  }},
+
+  { delay: 2200, action: () => {
+    addMessage('david', '● David', 'I offered to let her buy me out at fair market value with a payment plan. That\'s generous! But she wants to value my share at the pre-renovation price, which is $150K less. Mom privately told me the will should be honored as written.');
+  }},
+
+  { delay: 1500, action: () => {
+    const c6 = { id: 'claim_david_3', type: 'claim', label: 'Fair market value buyout' };
+    addGraphNode(c6);
+    addGraphEdge({ source: 'actor_david', target: 'claim_david_3', relationship: 'MAKES_CLAIM' });
+    updatePrimitives('claims', 6);
+
+    const lev2 = { id: 'lev_david_1', type: 'leverage', label: 'Legal right (will)' };
+    addGraphNode(lev2);
+    addGraphEdge({ source: 'actor_david', target: 'lev_david_1', relationship: 'HOLDS_LEVERAGE' });
+    addGraphEdge({ source: 'lev_david_1', target: 'actor_sarah', relationship: 'LEVERAGE_OVER' });
+    updatePrimitives('leverage', 2);
+
+    const con4 = { id: 'con_valuation', type: 'constraint', label: 'Valuation dispute: $150K gap' };
+    addGraphNode(con4);
+    addGraphEdge({ source: 'con_valuation', target: 'actor_sarah', relationship: 'CONSTRAINS' });
+    addGraphEdge({ source: 'con_valuation', target: 'actor_david', relationship: 'CONSTRAINS' });
+    updatePrimitives('constraints', 4);
+
+    setEscalation('escalating');
+
+    addMessage('concordia', '◈ CONCORDIA', 'A $150K gap in how you each value the same thing — that\'s the crux of the financial dispute. And Mom is navigating between you both. Let me run a health check on what we know so far.', ['add_claim', 'add_leverage', 'add_constraint']);
+  }},
+
+  // ── Health Check — Full ──
+  { delay: 2000, action: () => {
+    setPhase('Health Check — Full Case');
+    updateHealth(87, {
+      'two_plus_actors': true,
+      'all_actors_have_claims': true,
+      'all_actors_have_interests': true,
+      'has_constraints': true,
+      'has_leverage': true,
+      'has_events': true,
+      'has_narratives': true,
+      'case_metadata_set': false,
+    });
+
+    addMessage('system', '⬡ HEALTH CHECK', 'Full case health: <strong>Score 87%</strong> — Both parties mapped with claims, interests, constraints, leverage, events, and narratives. Ready for bridge session.', []);
+  }},
+
+  // ── CONCORDIA asks David targeted follow-up ──
+  { delay: 2000, action: () => {
+    setPhase('Follow-up — David');
+    setSpeaker('CONCORDIA', '#2abfac');
+    addMessage('concordia', '◈ CONCORDIA', 'David, one thing I want to understand better — beyond the money, what would it mean to you if the restaurant stayed in the family versus being sold to a stranger?');
+  }},
+
+  { delay: 2400, action: () => {
+    setSpeaker('David (Younger Sibling)', '#e8864d');
+    addMessage('david', '● David', 'Honestly? I\'d prefer it stay in the family. That\'s where I learned to cook with Dad. My daughter never met him — I want her to know that place. But I can\'t afford to wait years for Sarah to pay me out of profits.');
+  }},
+
+  { delay: 1500, action: () => {
+    const i7 = { id: 'interest_david_4', type: 'interest', label: 'Preserve family connection' };
+    addGraphNode(i7);
+    addGraphEdge({ source: 'actor_david', target: 'interest_david_4', relationship: 'HAS_INTEREST' });
+    updatePrimitives('interests', 7);
+
+    // Set case info
+    addMessage('concordia', '◈ CONCORDIA', 'That\'s significant — you both want the restaurant to stay in the family. That shared interest could be the foundation for a solution. Let me set up the case summary.', ['add_interest', 'set_case_info']);
+  }},
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── PHASE 3: Bridge Session ──
+  // ══════════════════════════════════════════════════════════════════
+  { delay: 2500, action: () => {
+    setPhase('Joint Session — Bridge');
+    setSpeaker('CONCORDIA Bridge', '#2abfac');
+    addMessage('system', '⬡ SYSTEM', 'Entering <strong>Joint Session</strong>. Both parties are now present. Bridge facilitator active. Confidentiality rules in effect.', []);
+  }},
+
+  { delay: 2000, action: () => {
+    addMessage('concordia', '◈ BRIDGE FACILITATOR', 'Sarah, David — thank you both for sharing your perspectives. Here\'s what I see structurally, without attributing anything specific:<br><br>Two people who both care about their father\'s legacy. Seven distinct interests between you — and at least two are <em>shared</em>. A $150K valuation gap that seems large but is actually quite narrow given the emotional stakes. And a 6-month deadline that creates urgency.');
+
+    // Show common ground
+    showCommonGround([
+      { type: 'Shared Interest: Family Legacy', desc: 'Both parties want the restaurant to remain in the family and preserve their father\'s memory.' },
+      { type: 'Shared Interest: Recognition', desc: 'Both feel their contributions and sacrifices have been undervalued by the other.' },
+      { type: 'Shared Constraint: Time Pressure', desc: '6-month probate deadline creates urgency for resolution.' },
+    ]);
+  }},
+
+  // ── Knowledge graph continues building ──
+  { delay: 2200, action: () => {
+    // Add more edges for common ground visualization
+    const cg1 = { id: 'cg_legacy', type: 'interest', label: '★ SHARED: Family legacy' };
+    addGraphNode(cg1);
+    addGraphEdge({ source: 'actor_sarah', target: 'cg_legacy', relationship: 'SHARED_INTEREST' });
+    addGraphEdge({ source: 'actor_david', target: 'cg_legacy', relationship: 'SHARED_INTEREST' });
+
+    const cg2 = { id: 'cg_recognition', type: 'interest', label: '★ SHARED: Recognition' };
+    addGraphNode(cg2);
+    addGraphEdge({ source: 'actor_sarah', target: 'cg_recognition', relationship: 'SHARED_INTEREST' });
+    addGraphEdge({ source: 'actor_david', target: 'cg_recognition', relationship: 'SHARED_INTEREST' });
+
+    addMessage('concordia', '◈ BRIDGE FACILITATOR', 'The core divergence is around valuation — specifically, how to account for Sarah\'s sweat equity within the legal framework of the will. One perspective says contribution should equal ownership. The other says the will is the final word.<br><br>But notice — neither of you is being unreasonable. You\'re just measuring fairness differently.');
+  }},
+
+  { delay: 2200, action: () => {
+    addMessage('sarah', '● Sarah', 'I don\'t think David is being unreasonable. I just think the numbers need to reflect reality.');
+  }},
+
+  { delay: 1400, action: () => {
+    addMessage('david', '● David', 'And I\'m not saying Sarah didn\'t do amazing work. I just think the will is the will.');
+  }},
+
+  { delay: 1800, action: () => {
+    addMessage('concordia', '◈ BRIDGE FACILITATOR', 'Good — you\'re both acknowledging each other. That\'s the foundation. Let me translate this into something concrete. What if the question isn\'t "who\'s right about the will" but rather "how do we structure a deal that honors both the will AND Sarah\'s contribution?"');
+
+    setPhase('Resolution — Finding Paths');
+    updateHealth(100, {
+      'two_plus_actors': true,
+      'all_actors_have_claims': true,
+      'all_actors_have_interests': true,
+      'has_constraints': true,
+      'has_leverage': true,
+      'has_events': true,
+      'has_narratives': true,
+      'case_metadata_set': true,
+    });
+  }},
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── PHASE 4: Resolution ──
+  // ══════════════════════════════════════════════════════════════════
+  { delay: 2500, action: () => {
+    setSpeaker('CONCORDIA Resolver', '#2abfac');
+    setPhase('Resolution Paths');
+    setEscalation('emerging');
+
+    addMessage('concordia', '◈ RESOLUTION ARCHITECT', 'Based on the knowledge graph — 4 actors, 6 claims, 7 interests, 4 constraints, 2 leverage points, and 2 shared interests — here are three structured paths to agreement:');
+  }},
+
+  { delay: 2000, action: () => {
+    showResolution([
+      {
+        icon: '◆',
+        title: 'Path A — Structured Buyout with Equity Recognition',
+        body: 'Independent appraisal at fair market value. Sarah gets a "management credit" of 15-20% for sweat equity, reducing David\'s effective share. David receives payment over 3 years at an agreed interest rate, with the restaurant as collateral. Family recipes shared via a family cookbook project.',
+        tags: [
+          { label: 'Sarah gets: 55-60% effective share', for: 'sarah' },
+          { label: 'David gets: market-rate payment plan', for: 'david' },
+          { label: 'Shared: Legacy preserved', for: 'shared' },
+        ]
+      },
+    ]);
+  }},
+
+  { delay: 2500, action: () => {
+    showResolution([
+      {
+        icon: '◇',
+        title: 'Path B — Hybrid: Partial Sale + Family Trust',
+        body: 'Restaurant valued independently. David\'s 50% is split: 25% bought out immediately (using a business loan), 25% held in a family trust that pays David annual dividends. Trust ensures the restaurant stays in the family. Sarah retains operational control with a board seat for David.',
+        tags: [
+          { label: 'Sarah gets: control + legacy', for: 'sarah' },
+          { label: 'David gets: immediate cash + ongoing income', for: 'david' },
+          { label: 'Shared: Daughter inherits connection', for: 'shared' },
+        ]
+      },
+    ]);
+  }},
+
+  { delay: 2500, action: () => {
+    showResolution([
+      {
+        icon: '○',
+        title: 'Path C — Creative Restructure',
+        body: 'Restaurant becomes an LLC. Sarah holds 60% (50% will + 10% sweat equity credit), David holds 40%. David\'s role shifts to silent partner with profit distributions. A "sunset clause" lets either party trigger a full buyout after 5 years. Mom serves as honorary advisor.',
+        tags: [
+          { label: 'Sarah gets: majority + recognition', for: 'sarah' },
+          { label: 'David gets: ongoing value + exit option', for: 'david' },
+          { label: 'Shared: Both stay connected to legacy', for: 'shared' },
+        ]
+      },
+    ]);
+
+    // Final graph additions
+    const res1 = { id: 'res_path_a', type: 'commitment', label: 'Path A: Equity Buyout' };
+    const res2 = { id: 'res_path_b', type: 'commitment', label: 'Path B: Family Trust' };
+    const res3 = { id: 'res_path_c', type: 'commitment', label: 'Path C: LLC Restructure' };
+    addGraphNode(res1); addGraphNode(res2); addGraphNode(res3);
+    addGraphEdge({ source: 'actor_sarah', target: 'res_path_a', relationship: 'CANDIDATE_AGREEMENT' });
+    addGraphEdge({ source: 'actor_david', target: 'res_path_a', relationship: 'CANDIDATE_AGREEMENT' });
+    addGraphEdge({ source: 'actor_sarah', target: 'res_path_b', relationship: 'CANDIDATE_AGREEMENT' });
+    addGraphEdge({ source: 'actor_david', target: 'res_path_b', relationship: 'CANDIDATE_AGREEMENT' });
+    addGraphEdge({ source: 'actor_sarah', target: 'res_path_c', relationship: 'CANDIDATE_AGREEMENT' });
+    addGraphEdge({ source: 'actor_david', target: 'res_path_c', relationship: 'CANDIDATE_AGREEMENT' });
+    updatePrimitives('commitments', 4);
+  }},
+
+  // ── Closing ──
+  { delay: 2500, action: () => {
+    addMessage('concordia', '◈ CONCORDIA', 'Each path addresses both of your core interests — Sarah\'s need for recognition and David\'s need for financial security. All preserve the family legacy. The 6-month deadline is workable with any of these.<br><br>Tacitus Framework assessment: <em>Escalation reduced from "escalating" to "emerging." Both parties show willingness to negotiate. ZOPA (Zone of Possible Agreement) identified across all three paths.</em>');
+
+    setEscalation('latent');
+  }},
+
+  { delay: 2000, action: () => {
+    addMessage('sarah', '● Sarah', 'Path B is interesting... I\'d want to know more about how the trust would work.');
+  }},
+
+  { delay: 1500, action: () => {
+    addMessage('david', '● David', 'I like Path B too actually. Ongoing dividends would help, and my daughter would still have a connection to Grandpa\'s place.');
+  }},
+
+  { delay: 2000, action: () => {
+    addMessage('concordia', '◈ CONCORDIA', 'That\'s convergence. Both of you are gravitating toward the same path — and for complementary reasons. That\'s exactly how good resolutions work: each side gets what matters most to them, and the tradeoffs feel fair.<br><br>Next steps would be: independent appraisal, trust attorney consultation, and a follow-up session to refine the terms. Your father\'s restaurant — and his legacy — are in good hands. ✦');
+
+    setPhase('Resolution — Convergence');
+  }},
+
+  { delay: 1500, action: () => {
+    addMessage('system', '⬡ SESSION COMPLETE', 'Demo complete. The knowledge graph contains <strong>30+ nodes</strong> and <strong>40+ edges</strong> across 8 structural primitives. Case health: <strong>100%</strong>. Resolution convergence achieved on Path B.', []);
+  }},
+];
+
+// ── Demo Runner ────────────────────────────────────────────────────
+let currentStep = 0;
+
+function runStep() {
+  if (state.paused || currentStep >= script.length) return;
+
+  const step = script[currentStep];
+  step.action();
+  currentStep++;
+
+  document.getElementById('stepCounter').textContent = currentStep;
+  document.getElementById('progressFill').style.width = ((currentStep / script.length) * 100) + '%';
+
+  if (currentStep < script.length) {
+    const nextDelay = script[currentStep].delay / state.speed;
+    state.timer = setTimeout(runStep, nextDelay);
+  }
+}
+
+function startDemo() {
+  document.getElementById('totalSteps').textContent = script.length;
+  initGraph();
+  initLegend();
+  state.timer = setTimeout(runStep, 1000);
+}
+
+function togglePause() {
+  state.paused = !state.paused;
+  document.getElementById('btnPause').textContent = state.paused ? '▶ Play' : '⏸ Pause';
+  if (!state.paused) runStep();
+}
+
+function cycleSpeed() {
+  const speeds = [1, 1.5, 2, 3];
+  const labels = ['1×', '1.5×', '2×', '3×'];
+  const idx = speeds.indexOf(state.speed);
+  const next = (idx + 1) % speeds.length;
+  state.speed = speeds[next];
+  document.getElementById('btnSpeed').textContent = labels[next];
+}
+
+function restartDemo() {
+  clearTimeout(state.timer);
+  state.nodes = [];
+  state.edges = [];
+  state.paused = false;
+  state.counts = { actors: 0, claims: 0, interests: 0, constraints: 0, leverage: 0, events: 0, narratives: 0, commitments: 0, edges: 0 };
+  state.healthScore = 0;
+  state.healthChecks = {};
+  state.escalation = 0;
+  currentStep = 0;
+
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('healthChecks').innerHTML = '';
+  document.getElementById('commonGroundItems').innerHTML = '';
+  document.getElementById('resolutionCards').innerHTML = '';
+  document.getElementById('commonGroundSection').style.display = 'none';
+  document.getElementById('resolutionSection').style.display = 'none';
+  document.getElementById('healthScore').textContent = '0%';
+  document.getElementById('healthBar').style.width = '0%';
+  document.getElementById('stepCounter').textContent = '0';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('btnPause').textContent = '⏸ Pause';
+
+  Object.keys(state.counts).forEach(k => {
+    const id = 'p' + k.charAt(0).toUpperCase() + k.slice(1);
+    const el = document.getElementById(id);
+    if (el) el.textContent = '0';
+  });
+
+  setPhase('Initializing');
+  setSpeaker('Starting...', '#888');
+  setEscalation('latent');
+  initGraph();
+  state.timer = setTimeout(runStep, 1000);
+}
+
+// ── Kick off ──
+window.addEventListener('load', startDemo);
+window.addEventListener('resize', () => {
+  if (simulation) {
+    const panel = document.getElementById('graphPanel');
+    simulation.force('center', d3.forceCenter(panel.clientWidth / 2, panel.clientHeight / 2));
+    simulation.force('x', d3.forceX(panel.clientWidth / 2).strength(0.03));
+    simulation.force('y', d3.forceY(panel.clientHeight / 2).strength(0.03));
+    simulation.alpha(0.3).restart();
+  }
+});
+</script>
+</body>
+</html>
