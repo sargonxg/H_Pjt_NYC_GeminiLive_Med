@@ -3,17 +3,30 @@ CONCORDIA Agent Tools
 
 14 tool functions that Gemini calls during mediation conversations
 to build, analyze, and resolve the conflict knowledge graph.
+
+Tools read `graph` and `active_party` from the ontology module dynamically
+so that multi-party / multi-case code can swap the active graph at runtime.
 """
 
 from __future__ import annotations
 
+from . import ontology
 from .ontology import (
     Actor, ActorType, Claim, ClaimType, Interest, InterestType,
     Constraint, ConstraintType, Leverage, LeverageType,
     Commitment, CommitmentStatus, Event, EventType,
     Narrative, Edge, Document, EscalationLevel, Phase,
-    graph, active_party,
 )
+
+
+def _graph():
+    """Get the current active graph (allows runtime swapping)."""
+    return ontology.graph
+
+
+def _party():
+    """Get the current active party (allows runtime swapping)."""
+    return ontology.active_party
 
 
 # ── Graph Building Tools (Listener) ─────────────────────────────────────────
@@ -32,6 +45,7 @@ def add_actor(name: str, actor_type: str, description: str, role_in_conflict: st
     Returns:
         dict with the actor id, name, and whether it was newly created.
     """
+    graph = _graph()
     # Deduplicate by name
     for existing in graph.actors:
         if existing.name.lower() == name.lower():
@@ -42,7 +56,7 @@ def add_actor(name: str, actor_type: str, description: str, role_in_conflict: st
         actor_type=ActorType(actor_type),
         description=description,
         role_in_conflict=role_in_conflict,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.actors.append(actor)
     graph.phase = Phase.STRUCTURE
@@ -63,12 +77,13 @@ def add_claim(claim_type: str, content: str, source_actor_id: str, target_actor_
     Returns:
         dict with the claim id and edges created.
     """
+    graph = _graph()
     claim = Claim(
         claim_type=ClaimType(claim_type),
         content=content,
         source_actor_id=source_actor_id,
         target_actor_id=target_actor_id,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.claims.append(claim)
 
@@ -103,12 +118,13 @@ def add_interest(interest_type: str, description: str, actor_id: str, priority: 
     Returns:
         dict with the interest id.
     """
+    graph = _graph()
     interest = Interest(
         interest_type=InterestType(interest_type),
         description=description,
         actor_id=actor_id,
         priority=priority,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.interests.append(interest)
     graph.edges.append(Edge(
@@ -131,12 +147,13 @@ def add_constraint(constraint_type: str, description: str, affects_actor_ids: st
     Returns:
         dict with the constraint id and edges created.
     """
+    graph = _graph()
     ids = [aid.strip() for aid in affects_actor_ids.split(",") if aid.strip()]
     constraint = Constraint(
         constraint_type=ConstraintType(constraint_type),
         description=description,
         affects_actor_ids=ids,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.constraints.append(constraint)
 
@@ -164,13 +181,14 @@ def add_leverage(leverage_type: str, description: str, held_by_actor_id: str,
     Returns:
         dict with the leverage id.
     """
+    graph = _graph()
     leverage = Leverage(
         leverage_type=LeverageType(leverage_type),
         description=description,
         held_by_actor_id=held_by_actor_id,
         target_actor_id=target_actor_id,
         strength=strength,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.leverages.append(leverage)
     graph.edges.append(Edge(
@@ -198,12 +216,13 @@ def add_commitment(description: str, committed_actor_id: str, to_actor_id: str, 
     Returns:
         dict with the commitment id.
     """
+    graph = _graph()
     commitment = Commitment(
         description=description,
         committed_actor_id=committed_actor_id,
         to_actor_id=to_actor_id,
         status=CommitmentStatus(status),
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.commitments.append(commitment)
     graph.edges.append(Edge(
@@ -227,13 +246,14 @@ def add_event(event_type: str, description: str, date: str, involved_actor_ids: 
     Returns:
         dict with the event id.
     """
+    graph = _graph()
     ids = [aid.strip() for aid in involved_actor_ids.split(",") if aid.strip()]
     event = Event(
         event_type=EventType(event_type),
         description=description,
         date=date,
         involved_actor_ids=ids,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.events.append(event)
 
@@ -258,12 +278,13 @@ def add_narrative(description: str, held_by_actor_id: str, frames: str) -> dict:
     Returns:
         dict with the narrative id.
     """
+    graph = _graph()
     frame_list = [f.strip() for f in frames.split(",") if f.strip()]
     narrative = Narrative(
         description=description,
         held_by_actor_id=held_by_actor_id,
         frames=frame_list,
-        contributed_by=active_party,
+        contributed_by=_party(),
     )
     graph.narratives.append(narrative)
     graph.edges.append(Edge(
@@ -286,6 +307,7 @@ def add_edge(source_id: str, target_id: str, relationship: str, description: str
     Returns:
         dict confirming the edge was created.
     """
+    graph = _graph()
     edge = Edge(
         source_id=source_id,
         target_id=target_id,
@@ -308,6 +330,7 @@ def set_case_info(case_title: str, case_summary: str, escalation_level: str) -> 
     Returns:
         dict confirming the case info was set.
     """
+    graph = _graph()
     graph.case_title = case_title
     graph.case_summary = case_summary
     graph.escalation_level = EscalationLevel(escalation_level)
@@ -326,7 +349,8 @@ def ingest_document(text: str, name: str) -> dict:
     Returns:
         dict with document metadata and the text to analyze.
     """
-    doc = Document(name=name, length=len(text), contributed_by=active_party)
+    graph = _graph()
+    doc = Document(name=name, length=len(text), contributed_by=_party())
     graph.documents.append(doc)
     return {
         "status": "ingested",
@@ -347,6 +371,7 @@ def get_graph() -> dict:
     Returns:
         dict with the full graph data and health check results.
     """
+    graph = _graph()
     data = graph.model_dump()
     data["health"] = graph.health_check()
     return data
@@ -360,8 +385,12 @@ def run_health_check() -> dict:
     Returns:
         dict with score (0-100), checks, gaps, and ready boolean.
     """
+    graph = _graph()
     graph.phase = Phase.VERIFY
-    return graph.health_check()
+    result = graph.health_check()
+    # Also update escalation assessment
+    graph.escalation_assessment()
+    return result
 
 
 def analyze_common_ground() -> dict:
@@ -372,6 +401,7 @@ def analyze_common_ground() -> dict:
     Returns:
         dict with shared_interests, broken_commitments, and leverage_balance.
     """
+    graph = _graph()
     graph.phase = Phase.RESOLVE
     return graph.find_common_ground()
 
