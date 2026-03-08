@@ -1,3 +1,968 @@
-<!-- CONCORDIA Frontend — Placeholder for Prompt 3 -->
 <!DOCTYPE html>
-<html><head><title>CONCORDIA</title></head><body><h1>CONCORDIA</h1></body></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONCORDIA — Live AI Mediation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --panel: #10101a;
+  --border: #1a1a2e;
+  --text: #e0e0e0;
+  --text2: #8896a8;
+  --muted: #5a6577;
+  --accent: #2abfac;
+  --accent-dim: #1a8f7f;
+  --red: #e85d5d;
+  --blue: #4ba3d1;
+  --gold: #e8b84d;
+  --green: #6bbf8a;
+  --purple: #b07fd0;
+  --orange: #e8864d;
+  --mint: #6bcfaf;
+}
+
+body {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── API Key Bar ─────────────────────────────────────────── */
+#apiKeyBar {
+  padding: 10px 20px;
+  background: #1a1020;
+  border-bottom: 1px solid #2a1a3e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#apiKeyBar.hidden { display: none; }
+#apiKeyBar label { color: var(--text2); font-size: 12px; }
+#apiKeyInput {
+  flex: 1;
+  background: #0d0d18;
+  border: 1px solid #2a1a3e;
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+#apiKeyBar button {
+  background: var(--accent);
+  color: #0a0a0f;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+#header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  gap: 16px;
+  flex-shrink: 0;
+}
+#logo {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent);
+}
+#phaseBadge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+#healthBarWrap {
+  width: 200px;
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+#healthBarFill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--red), var(--gold), var(--accent));
+  transition: width 0.6s ease;
+}
+#healthLabel { font-size: 11px; color: var(--text2); min-width: 30px; }
+#nodeCount { font-size: 11px; color: var(--muted); margin-left: auto; }
+#wsStatus {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red);
+  transition: background 0.3s;
+}
+#wsStatus.connected { background: var(--green); }
+
+/* ── Main Layout ─────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Chat Panel ──────────────────────────────────────────── */
+#chatPanel {
+  width: 420px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+}
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#messages::-webkit-scrollbar { width: 4px; }
+#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.msg {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  word-wrap: break-word;
+}
+.msg.user {
+  align-self: flex-end;
+  background: #1a2540;
+  border: 1px solid #243050;
+  color: var(--text);
+}
+.msg.agent {
+  align-self: flex-start;
+  background: #12121e;
+  border: 1px solid var(--border);
+}
+.msg.agent .author {
+  font-size: 10px;
+  color: var(--accent);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.msg.system {
+  align-self: center;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Tool Feed ───────────────────────────────────────────── */
+#toolFeed {
+  max-height: 80px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  padding: 4px 12px;
+  font-size: 10px;
+  color: var(--muted);
+  background: #0c0c14;
+}
+#toolFeed::-webkit-scrollbar { width: 3px; }
+#toolFeed::-webkit-scrollbar-thumb { background: var(--border); }
+.tool-entry {
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tool-entry .tool-name { color: var(--accent-dim); }
+
+/* ── Input Bar ───────────────────────────────────────────── */
+#inputBar {
+  display: flex;
+  padding: 10px 12px;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+#textInput {
+  flex: 1;
+  background: #0d0d18;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+#textInput:focus { border-color: var(--accent-dim); }
+#textInput::placeholder { color: var(--muted); }
+#sendBtn, #micBtn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+#sendBtn {
+  background: var(--accent);
+  color: #0a0a0f;
+}
+#sendBtn:hover { background: #35d4bf; }
+#micBtn {
+  background: transparent;
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  width: 40px;
+  font-size: 16px;
+  padding: 0;
+  transition: all 0.2s;
+}
+#micBtn.recording {
+  background: var(--red);
+  color: #fff;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,93,93,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(232,93,93,0); }
+}
+
+/* ── Graph Panel ─────────────────────────────────────────── */
+#graphPanel {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+#graphPanel svg { width: 100%; height: 100%; display: block; }
+#graphEmpty {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+#graphEmpty .big { font-size: 28px; margin-bottom: 8px; opacity: 0.3; }
+
+/* ── Stats Panel ─────────────────────────────────────────── */
+#statsPanel {
+  width: 220px;
+  min-width: 180px;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#statsPanel::-webkit-scrollbar { width: 4px; }
+#statsPanel::-webkit-scrollbar-thumb { background: var(--border); }
+
+.stats-section h3 {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.stat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.stat-count {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 16px;
+  text-align: right;
+}
+.stat-label { color: var(--text2); }
+
+/* Gaps */
+.gap-item {
+  font-size: 11px;
+  color: var(--gold);
+  padding: 4px 0;
+  line-height: 1.35;
+}
+.gap-item::before { content: "! "; font-weight: bold; }
+
+/* Node Detail */
+#nodeDetail { display: none; }
+#nodeDetail.visible { display: block; }
+#nodeDetail .detail-type {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+#nodeDetail .detail-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+#nodeDetail .detail-desc {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.4;
+}
+#nodeDetail .detail-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Tooltip */
+#tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #1a1a2e;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  max-width: 260px;
+  word-wrap: break-word;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+#tooltip.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- API Key Bar -->
+<div id="apiKeyBar">
+  <label>GEMINI API KEY</label>
+  <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key to start...">
+  <button onclick="setApiKey()">Connect</button>
+</div>
+
+<!-- Header -->
+<div id="header">
+  <div id="logo">CONCORDIA</div>
+  <div id="phaseBadge">ARRIVE</div>
+  <div id="healthBarWrap"><div id="healthBarFill"></div></div>
+  <div id="healthLabel">0%</div>
+  <div id="nodeCount">0 nodes &middot; 0 edges</div>
+  <div id="wsStatus" title="WebSocket disconnected"></div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <!-- Chat Panel -->
+  <div id="chatPanel">
+    <div id="messages">
+      <div class="msg system">Welcome to CONCORDIA. Connect and start a conversation.</div>
+    </div>
+    <div id="toolFeed"></div>
+    <div id="inputBar">
+      <input type="text" id="textInput" placeholder="Tell me what's going on..." autocomplete="off">
+      <button id="sendBtn" onclick="sendText()">Send</button>
+      <button id="micBtn" onclick="toggleMic()">&#x1f3a4;</button>
+    </div>
+  </div>
+
+  <!-- Graph Panel -->
+  <div id="graphPanel">
+    <div id="graphEmpty">
+      <div class="big">&#x25CE;</div>
+      Start talking — the conflict graph<br>will build live as you speak.
+    </div>
+    <svg id="graphSvg"></svg>
+    <div id="tooltip"></div>
+  </div>
+
+  <!-- Stats Panel -->
+  <div id="statsPanel">
+    <div class="stats-section">
+      <h3>Primitives</h3>
+      <div id="primitiveCounts">
+        <div class="stat-row"><span class="stat-dot" style="background:#e85d5d"></span><span class="stat-count" data-key="actors">0</span><span class="stat-label">Actors</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#2abfac"></span><span class="stat-count" data-key="claims">0</span><span class="stat-label">Claims</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#4ba3d1"></span><span class="stat-count" data-key="interests">0</span><span class="stat-label">Interests</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#6bbf8a"></span><span class="stat-count" data-key="constraints">0</span><span class="stat-label">Constraints</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#e8b84d"></span><span class="stat-count" data-key="leverages">0</span><span class="stat-label">Leverage</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#b07fd0"></span><span class="stat-count" data-key="commitments">0</span><span class="stat-label">Commitments</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#e8864d"></span><span class="stat-count" data-key="events">0</span><span class="stat-label">Events</span></div>
+        <div class="stat-row"><span class="stat-dot" style="background:#6bcfaf"></span><span class="stat-count" data-key="narratives">0</span><span class="stat-label">Narratives</span></div>
+      </div>
+    </div>
+    <div class="stats-section">
+      <h3>Gaps</h3>
+      <div id="gapsList"><span style="font-size:11px;color:var(--muted)">No data yet</span></div>
+    </div>
+    <div class="stats-section" id="nodeDetail">
+      <h3>Selected Node</h3>
+      <div class="detail-type" id="detailType"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-desc" id="detailDesc"></div>
+      <div class="detail-meta" id="detailMeta"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ───────────────────────────────────────────────
+const COLORS = {
+  actor:      "#e85d5d",
+  claim:      "#2abfac",
+  interest:   "#4ba3d1",
+  constraint: "#6bbf8a",
+  leverage:   "#e8b84d",
+  commitment: "#b07fd0",
+  event:      "#e8864d",
+  narrative:  "#6bcfaf",
+};
+
+const TYPE_LABELS = {
+  actor: "Actor", claim: "Claim", interest: "Interest",
+  constraint: "Constraint", leverage: "Leverage",
+  commitment: "Commitment", event: "Event", narrative: "Narrative",
+};
+
+const TYPE_ICONS = {
+  actor: "\u{1F464}", claim: "\u{1F4AC}", interest: "\u{1F3AF}",
+  constraint: "\u{1F512}", leverage: "\u{26A1}", commitment: "\u{1F91D}",
+  event: "\u{1F4C5}", narrative: "\u{1F4D6}",
+};
+
+const PHASE_COLORS = {
+  arrive: "#5a6577", structure: "#4ba3d1",
+  verify: "#e8b84d", resolve: "#2abfac",
+};
+
+function nodeType(id) {
+  if (!id) return "actor";
+  const prefix = id.split("_")[0];
+  const map = {
+    actor: "actor", claim: "claim", interest: "interest",
+    constraint: "constraint", leverage: "leverage",
+    commitment: "commitment", event: "event", narrative: "narrative",
+  };
+  return map[prefix] || "actor";
+}
+
+function nodeColor(id) { return COLORS[nodeType(id)] || "#5a6577"; }
+
+// ── State ───────────────────────────────────────────────────
+let ws = null;
+let graphData = null;
+let audioContext = null;
+let mediaStream = null;
+let processor = null;
+let isRecording = false;
+
+// ── WebSocket ───────────────────────────────────────────────
+const userId = "user-" + Math.random().toString(36).slice(2, 8);
+const sessionId = "session-" + Math.random().toString(36).slice(2, 8);
+
+function connectWs() {
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(`${protocol}//${location.host}/ws/${userId}/${sessionId}`);
+
+  ws.onopen = () => {
+    document.getElementById("wsStatus").classList.add("connected");
+    document.getElementById("wsStatus").title = "Connected";
+    addSystemMessage("Connected to CONCORDIA.");
+  };
+
+  ws.onclose = () => {
+    document.getElementById("wsStatus").classList.remove("connected");
+    document.getElementById("wsStatus").title = "Disconnected — reconnecting...";
+    setTimeout(connectWs, 2000);
+  };
+
+  ws.onerror = () => {};
+
+  ws.onmessage = (event) => {
+    if (typeof event.data === "string") {
+      const msg = JSON.parse(event.data);
+      switch (msg.type) {
+        case "text":
+          addAgentMessage(msg.content, msg.author);
+          break;
+        case "tool_call":
+          addToolEntry(msg.tool, msg.args);
+          break;
+        case "graph_update":
+          updateGraph(msg.graph);
+          updateStats(msg.graph, msg.health);
+          updateHealth(msg.health);
+          break;
+        case "transcription":
+          // Optional: show live transcription
+          break;
+      }
+    }
+    // Binary data = audio playback (future)
+  };
+}
+
+// ── API Key ─────────────────────────────────────────────────
+async function checkApiKey() {
+  try {
+    const r = await fetch("/api/status");
+    if (r.ok) {
+      // Server is running, check if key is needed
+      // Always show key bar initially; user can connect without it if .env is set
+      document.getElementById("apiKeyBar").classList.remove("hidden");
+      connectWs();
+    }
+  } catch {
+    document.getElementById("apiKeyBar").classList.remove("hidden");
+  }
+}
+
+async function setApiKey() {
+  const key = document.getElementById("apiKeyInput").value.trim();
+  if (!key) return;
+  try {
+    await fetch("/api/set-key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    document.getElementById("apiKeyBar").classList.add("hidden");
+    addSystemMessage("API key set. Ready to mediate.");
+  } catch {
+    addSystemMessage("Failed to set API key.");
+  }
+}
+
+// ── Chat Messages ───────────────────────────────────────────
+const messagesEl = document.getElementById("messages");
+
+function addUserMessage(text) {
+  const div = document.createElement("div");
+  div.className = "msg user";
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addAgentMessage(text, author) {
+  const div = document.createElement("div");
+  div.className = "msg agent";
+  const authorEl = document.createElement("div");
+  authorEl.className = "author";
+  authorEl.textContent = author || "concordia";
+  div.appendChild(authorEl);
+  const contentEl = document.createElement("div");
+  contentEl.textContent = text;
+  div.appendChild(contentEl);
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addSystemMessage(text) {
+  const div = document.createElement("div");
+  div.className = "msg system";
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── Tool Feed ───────────────────────────────────────────────
+const toolFeedEl = document.getElementById("toolFeed");
+
+function addToolEntry(tool, args) {
+  const div = document.createElement("div");
+  div.className = "tool-entry";
+  const argsStr = Object.entries(args || {})
+    .map(([k, v]) => `${k}="${String(v).slice(0, 30)}"`)
+    .join(" ");
+  div.innerHTML = `<span class="tool-name">${tool}</span> ${argsStr}`;
+  toolFeedEl.appendChild(div);
+  toolFeedEl.scrollTop = toolFeedEl.scrollHeight;
+}
+
+// ── Send Text ───────────────────────────────────────────────
+const textInput = document.getElementById("textInput");
+
+function sendText() {
+  const text = textInput.value.trim();
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  addUserMessage(text);
+  ws.send(JSON.stringify({ type: "text", content: text }));
+  textInput.value = "";
+}
+
+textInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendText();
+  }
+});
+
+// ── Audio ───────────────────────────────────────────────────
+async function startAudio() {
+  try {
+    audioContext = new AudioContext({ sampleRate: 16000 });
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { sampleRate: 16000, channelCount: 1 },
+    });
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+    processor.onaudioprocess = (e) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const float32 = e.inputBuffer.getChannelData(0);
+        const int16 = new Int16Array(float32.length);
+        for (let i = 0; i < float32.length; i++) {
+          int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+        }
+        ws.send(int16.buffer);
+      }
+    };
+
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+    isRecording = true;
+    document.getElementById("micBtn").classList.add("recording");
+  } catch (err) {
+    addSystemMessage("Microphone access denied.");
+  }
+}
+
+function stopAudio() {
+  if (processor) { processor.disconnect(); processor = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  if (audioContext) { audioContext.close(); audioContext = null; }
+  isRecording = false;
+  document.getElementById("micBtn").classList.remove("recording");
+}
+
+function toggleMic() {
+  if (isRecording) { stopAudio(); }
+  else { startAudio(); }
+}
+
+// ── D3 Force Graph ──────────────────────────────────────────
+const svg = d3.select("#graphSvg");
+const graphPanel = document.getElementById("graphPanel");
+const tooltip = document.getElementById("tooltip");
+let simulation, linkGroup, nodeGroup, labelGroup;
+let currentNodes = [], currentLinks = [];
+
+function initGraph() {
+  const w = graphPanel.clientWidth;
+  const h = graphPanel.clientHeight;
+
+  svg.attr("viewBox", [0, 0, w, h]);
+
+  // Arrow marker
+  svg.append("defs").append("marker")
+    .attr("id", "arrow")
+    .attr("viewBox", "0 -4 8 8")
+    .attr("refX", 20)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M0,-4L8,0L0,4")
+    .attr("fill", "#2a2a3e");
+
+  const g = svg.append("g").attr("class", "graph-root");
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.2, 4])
+    .on("zoom", (e) => g.attr("transform", e.transform));
+  svg.call(zoom);
+
+  linkGroup = g.append("g").attr("class", "links");
+  nodeGroup = g.append("g").attr("class", "nodes");
+  labelGroup = g.append("g").attr("class", "labels");
+
+  simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(d => d.id).distance(90))
+    .force("charge", d3.forceManyBody().strength(-250))
+    .force("center", d3.forceCenter(w / 2, h / 2))
+    .force("collision", d3.forceCollide(30))
+    .on("tick", ticked);
+
+  simulation.stop();
+}
+
+function ticked() {
+  linkGroup.selectAll("line")
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  nodeGroup.selectAll("circle")
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y);
+
+  labelGroup.selectAll("text")
+    .attr("x", d => d.x)
+    .attr("y", d => d.y + (d.r || 12) + 14);
+}
+
+function updateGraph(data) {
+  if (!data) return;
+  graphData = data;
+
+  // Hide empty state
+  const emptyEl = document.getElementById("graphEmpty");
+  const totalNodes = (data.actors || []).length + (data.claims || []).length +
+    (data.interests || []).length + (data.constraints || []).length +
+    (data.leverages || []).length + (data.commitments || []).length +
+    (data.events || []).length + (data.narratives || []).length;
+  emptyEl.style.opacity = totalNodes > 0 ? "0" : "1";
+
+  // Build nodes
+  const nodes = [
+    ...(data.actors || []).map(n => ({ ...n, type: "actor", label: n.name, r: 18 })),
+    ...(data.claims || []).map(n => ({ ...n, type: "claim", label: (n.content || "").slice(0, 25), r: 12 })),
+    ...(data.interests || []).map(n => ({ ...n, type: "interest", label: (n.description || "").slice(0, 22), r: 11 })),
+    ...(data.constraints || []).map(n => ({ ...n, type: "constraint", label: (n.description || "").slice(0, 22), r: 11 })),
+    ...(data.leverages || []).map(n => ({ ...n, type: "leverage", label: (n.description || "").slice(0, 22), r: 12 })),
+    ...(data.commitments || []).map(n => ({ ...n, type: "commitment", label: (n.description || "").slice(0, 22), r: 10 })),
+    ...(data.events || []).map(n => ({ ...n, type: "event", label: (n.description || "").slice(0, 22), r: 11 })),
+    ...(data.narratives || []).map(n => ({ ...n, type: "narrative", label: (n.description || "").slice(0, 22), r: 11 })),
+  ];
+
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const links = (data.edges || [])
+    .filter(e => nodeIds.has(e.source_id) && nodeIds.has(e.target_id))
+    .map(e => ({ source: e.source_id, target: e.target_id, rel: e.relationship }));
+
+  // Preserve positions from existing nodes
+  const oldMap = {};
+  currentNodes.forEach(n => { oldMap[n.id] = { x: n.x, y: n.y, vx: n.vx, vy: n.vy }; });
+  nodes.forEach(n => {
+    if (oldMap[n.id]) {
+      n.x = oldMap[n.id].x;
+      n.y = oldMap[n.id].y;
+      n.vx = oldMap[n.id].vx;
+      n.vy = oldMap[n.id].vy;
+    }
+  });
+
+  currentNodes = nodes;
+  currentLinks = links;
+
+  // Links
+  linkGroup.selectAll("line")
+    .data(links, d => d.source + "-" + d.target + "-" + d.rel)
+    .join(
+      enter => enter.append("line")
+        .attr("stroke", "#2a2a3e")
+        .attr("stroke-width", 1.2)
+        .attr("marker-end", "url(#arrow)")
+        .attr("opacity", 0)
+        .transition().duration(400).attr("opacity", 0.7),
+      update => update,
+      exit => exit.transition().duration(300).attr("opacity", 0).remove()
+    );
+
+  // Nodes
+  nodeGroup.selectAll("circle")
+    .data(nodes, d => d.id)
+    .join(
+      enter => enter.append("circle")
+        .attr("r", 0)
+        .attr("fill", d => COLORS[d.type] || "#5a6577")
+        .attr("stroke", d => COLORS[d.type] || "#5a6577")
+        .attr("stroke-width", 2)
+        .attr("fill-opacity", 0.2)
+        .attr("cursor", "pointer")
+        .on("mouseover", (e, d) => showTooltip(e, d))
+        .on("mouseout", hideTooltip)
+        .on("click", (e, d) => selectNode(d))
+        .call(d3.drag()
+          .on("start", dragStart)
+          .on("drag", dragging)
+          .on("end", dragEnd))
+        .transition().duration(500)
+        .attr("r", d => d.r),
+      update => update
+        .attr("fill", d => COLORS[d.type] || "#5a6577")
+        .attr("stroke", d => COLORS[d.type] || "#5a6577"),
+      exit => exit.transition().duration(300).attr("r", 0).remove()
+    );
+
+  // Labels
+  labelGroup.selectAll("text")
+    .data(nodes, d => d.id)
+    .join(
+      enter => enter.append("text")
+        .attr("text-anchor", "middle")
+        .attr("font-size", d => d.type === "actor" ? "10px" : "8px")
+        .attr("fill", d => COLORS[d.type] || "#5a6577")
+        .attr("fill-opacity", 0)
+        .text(d => {
+          const icon = TYPE_ICONS[d.type] || "";
+          return icon + " " + (d.label || "").slice(0, 25);
+        })
+        .transition().duration(500).attr("fill-opacity", 0.7),
+      update => update
+        .text(d => {
+          const icon = TYPE_ICONS[d.type] || "";
+          return icon + " " + (d.label || "").slice(0, 25);
+        }),
+      exit => exit.transition().duration(300).attr("fill-opacity", 0).remove()
+    );
+
+  // Update simulation
+  simulation.nodes(nodes);
+  simulation.force("link").links(links);
+  simulation.alpha(0.5).restart();
+}
+
+function dragStart(e, d) {
+  if (!e.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragging(e, d) { d.fx = e.x; d.fy = e.y; }
+function dragEnd(e, d) {
+  if (!e.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+function showTooltip(e, d) {
+  const fullText = d.name || d.content || d.description || d.label || "";
+  tooltip.textContent = `[${TYPE_LABELS[d.type]}] ${fullText}`;
+  tooltip.classList.add("visible");
+  tooltip.style.left = (e.pageX - graphPanel.getBoundingClientRect().left + 12) + "px";
+  tooltip.style.top = (e.pageY - graphPanel.getBoundingClientRect().top - 10) + "px";
+}
+function hideTooltip() { tooltip.classList.remove("visible"); }
+
+function selectNode(d) {
+  const detail = document.getElementById("nodeDetail");
+  detail.classList.add("visible");
+  const typeEl = document.getElementById("detailType");
+  typeEl.textContent = TYPE_LABELS[d.type] || d.type;
+  typeEl.style.background = COLORS[d.type] || "#5a6577";
+  typeEl.style.color = "#0a0a0f";
+  document.getElementById("detailName").textContent = d.name || d.content || d.description || "";
+  document.getElementById("detailDesc").textContent = d.description || d.content || "";
+
+  let meta = [];
+  if (d.priority) meta.push("Priority: " + d.priority);
+  if (d.strength) meta.push("Strength: " + d.strength);
+  if (d.status) meta.push("Status: " + d.status);
+  if (d.date) meta.push("Date: " + d.date);
+  if (d.frames && d.frames.length) meta.push("Frames: " + d.frames.join(", "));
+  if (d.actor_type) meta.push("Type: " + d.actor_type);
+  if (d.role_in_conflict) meta.push("Role: " + d.role_in_conflict);
+  if (d.contributed_by) meta.push("From: " + d.contributed_by);
+  document.getElementById("detailMeta").textContent = meta.join(" | ");
+}
+
+// ── Stats / Health ──────────────────────────────────────────
+function updateStats(data, health) {
+  if (!data) return;
+  const counts = {
+    actors: (data.actors || []).length,
+    claims: (data.claims || []).length,
+    interests: (data.interests || []).length,
+    constraints: (data.constraints || []).length,
+    leverages: (data.leverages || []).length,
+    commitments: (data.commitments || []).length,
+    events: (data.events || []).length,
+    narratives: (data.narratives || []).length,
+  };
+
+  document.querySelectorAll(".stat-count[data-key]").forEach(el => {
+    const key = el.dataset.key;
+    if (counts[key] !== undefined) el.textContent = counts[key];
+  });
+
+  // Node count header
+  const totalNodes = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalEdges = (data.edges || []).length;
+  document.getElementById("nodeCount").textContent = `${totalNodes} nodes \u00B7 ${totalEdges} edges`;
+
+  // Gaps
+  const gapsEl = document.getElementById("gapsList");
+  if (health && health.gaps && health.gaps.length > 0) {
+    gapsEl.innerHTML = health.gaps.slice(0, 4).map(g =>
+      `<div class="gap-item">${g}</div>`
+    ).join("");
+  } else if (health && health.ready) {
+    gapsEl.innerHTML = '<span style="font-size:11px;color:var(--green)">Graph is ready for resolution</span>';
+  } else {
+    gapsEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No data yet</span>';
+  }
+}
+
+function updateHealth(health) {
+  if (!health) return;
+  const score = health.score || 0;
+  document.getElementById("healthBarFill").style.width = score + "%";
+  document.getElementById("healthLabel").textContent = score + "%";
+
+  // Phase badge (from graph data)
+  if (graphData && graphData.phase) {
+    const badge = document.getElementById("phaseBadge");
+    badge.textContent = graphData.phase.toUpperCase();
+    badge.style.background = PHASE_COLORS[graphData.phase] || "#5a6577";
+    badge.style.color = "#0a0a0f";
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  initGraph();
+  checkApiKey();
+});
+
+window.addEventListener("resize", () => {
+  const w = graphPanel.clientWidth;
+  const h = graphPanel.clientHeight;
+  svg.attr("viewBox", [0, 0, w, h]);
+  simulation.force("center", d3.forceCenter(w / 2, h / 2));
+  simulation.alpha(0.3).restart();
+});
+</script>
+</body>
+</html>

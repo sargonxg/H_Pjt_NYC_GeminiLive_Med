@@ -25,6 +25,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel as PydanticBaseModel
 
 from google.adk.agents.live_request_queue import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig, StreamingMode
@@ -94,6 +95,18 @@ async def get_status():
         },
         "health": graph.health_check(),
     }
+
+
+class ApiKeyRequest(PydanticBaseModel):
+    key: str
+
+
+@app.post("/api/set-key")
+async def set_api_key(req: ApiKeyRequest):
+    """Set the Gemini API key at runtime (hackathon demo only)."""
+    os.environ["GOOGLE_API_KEY"] = req.key
+    logger.info("API key updated at runtime.")
+    return {"status": "ok"}
 
 
 # ── Phase 2-4: WebSocket Endpoint ───────────────────────────────────────────
