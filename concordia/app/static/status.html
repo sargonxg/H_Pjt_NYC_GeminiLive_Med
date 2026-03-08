@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="30">
+<title>CONCORDIA — System Status</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f; --panel: #10101a; --border: #1a1a2e;
+  --text: #e0e0e0; --text2: #8896a8; --muted: #5a6577;
+  --accent: #2abfac; --red: #e85d5d; --green: #6bbf8a; --gold: #e8b84d;
+  --font: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text);
+  min-height: 100vh; padding: 20px; max-width: 900px; margin: 0 auto; }
+h1 { color: var(--accent); font-size: 28px; letter-spacing: 5px; margin-bottom: 4px; }
+h2 { font-size: 14px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase;
+  margin: 24px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin-bottom: 12px; }
+.status-row { display: flex; align-items: center; gap: 10; padding: 8px 0;
+  border-bottom: 1px solid var(--border); }
+.status-row:last-child { border-bottom: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ok { background: var(--green); }
+.warn { background: var(--gold); }
+.err { background: var(--red); }
+.label { color: var(--text2); font-size: 12px; flex: 1; }
+.value { color: var(--text); font-size: 12px; text-align: right; }
+.err-text { color: var(--red); font-size: 11px; }
+.ok-text { color: var(--green); }
+.warn-text { color: var(--gold); }
+.section-badge { font-size: 11px; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+.badge-ok { background: rgba(107,191,138,0.15); color: var(--green); }
+.badge-err { background: rgba(232,93,93,0.15); color: var(--red); }
+.badge-warn { background: rgba(232,184,77,0.15); color: var(--gold); }
+input { background: var(--panel); border: 1px solid var(--border); color: var(--text);
+  padding: 10px 14px; border-radius: 6px; font-family: var(--font); font-size: 13px;
+  width: 100%; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
+input:focus { border-color: var(--accent); }
+button { background: var(--accent); color: #0a0a0f; border: none; padding: 10px 24px;
+  border-radius: 6px; font-family: var(--font); font-size: 13px; font-weight: 700;
+  cursor: pointer; width: 100%; transition: all 0.2s; }
+button:hover { background: #35d4bf; }
+button.secondary { background: transparent; color: var(--accent);
+  border: 1px solid var(--accent); margin-top: 8px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+pre { background: #050508; border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px; font-size: 11px; overflow-x: auto; color: var(--text2); line-height: 1.5; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+#result { margin-top: 12px; padding: 12px; background: var(--bg); border-radius: 6px;
+  border: 1px solid var(--border); font-size: 12px; display: none; }
+#loader { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  margin-left: 6px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+  <div>
+    <h1>CONCORDIA</h1>
+    <p style="color:var(--muted);font-size:11px;margin-top:4px">AI-Powered Conflict Mediation — System Status</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;flex-direction:column;align-items:flex-end">
+    <a href="/" style="font-size:12px">→ Open App</a>
+    <span style="font-size:10px;color:var(--muted)">Auto-refreshes every 30s</span>
+  </div>
+</div>
+
+<!-- Status cards filled by JS -->
+<div id="status-overview">
+  <div class="card" style="border-left:4px solid var(--muted)">
+    <span id="loader">↻</span> Loading system status...
+  </div>
+</div>
+
+<h2>Configure API Key</h2>
+<div class="card">
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+    Get a free Gemini API key at
+    <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>
+    and paste it below. The key is applied immediately — no restart required.
+  </p>
+  <input type="password" id="apiKey" placeholder="Paste Gemini API key (AIza...)..." />
+  <button onclick="applyKey()">Apply Key &amp; Restart AI Engine</button>
+  <div id="result"></div>
+</div>
+
+<h2>Quick Tests</h2>
+<div class="grid2">
+  <div class="card">
+    <strong style="font-size:12px;display:block;margin-bottom:8px">Create Test Case</strong>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+      Tests case creation, the multi-party system, and conflict graph initialization.
+    </p>
+    <button onclick="testCreateCase()" class="secondary">Run Test</button>
+    <div id="test-case-result" style="margin-top:8px;font-size:11px;color:var(--text2)"></div>
+  </div>
+  <div class="card">
+    <strong style="font-size:12px;display:block;margin-bottom:8px">System Diagnostics (Full)</strong>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+      Check all components: packages, environment, ADK availability, graph health.
+    </p>
+    <button onclick="loadFullDiag()" class="secondary">Load Full Report</button>
+    <div id="diag-result" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<h2>Active Cases</h2>
+<div id="cases-panel">
+  <div class="card" style="font-size:12px;color:var(--muted)">Loading cases...</div>
+</div>
+
+<h2>API Endpoints</h2>
+<div class="card" style="font-size:12px">
+  <div class="status-row"><span class="label">GET /api/health</span>
+    <a href="/api/health" target="_blank" style="font-size:11px">Open →</a></div>
+  <div class="status-row"><span class="label">GET /api/diagnostics</span>
+    <a href="/api/diagnostics" target="_blank" style="font-size:11px">Open →</a></div>
+  <div class="status-row"><span class="label">GET /api/cases</span>
+    <a href="/api/cases" target="_blank" style="font-size:11px">Open →</a></div>
+  <div class="status-row"><span class="label">GET /api/graph</span>
+    <a href="/api/graph" target="_blank" style="font-size:11px">Open →</a></div>
+  <div class="status-row"><span class="label">GET /api/status</span>
+    <a href="/api/status" target="_blank" style="font-size:11px">Open →</a></div>
+  <div class="status-row"><span class="label">POST /api/set-key</span>
+    <span class="value" style="font-size:11px">Set Gemini API key at runtime</span></div>
+  <div class="status-row"><span class="label">POST /api/cases</span>
+    <span class="value" style="font-size:11px">Create mediation case</span></div>
+  <div class="status-row"><span class="label">POST /api/cases/{id}/upload</span>
+    <span class="value" style="font-size:11px">Upload party document</span></div>
+  <div class="status-row"><span class="label">POST /api/cases/{id}/advance</span>
+    <span class="value" style="font-size:11px">Advance mediation phase</span></div>
+  <div class="status-row"><span class="label">WS /ws/{case_id}/{party_id}/{session_id}</span>
+    <span class="value" style="font-size:11px">Live mediation WebSocket</span></div>
+</div>
+
+<script>
+async function loadStatus() {
+  try {
+    const [h, cases] = await Promise.all([
+      fetch('/api/health').then(r => r.json()),
+      fetch('/api/cases').then(r => r.json()).catch(() => []),
+    ]);
+
+    // Overview
+    const adkOk = h.adk_available;
+    const apiOk = h.gemini_api !== 'no_api_key';
+    const overall = adkOk && apiOk ? 'ok' : !apiOk ? 'warn' : 'err';
+
+    document.getElementById('status-overview').innerHTML = `
+      <div class="card" style="border-left:4px solid var(--${overall === 'ok' ? 'green' : overall === 'warn' ? 'gold' : 'red'})">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <strong style="font-size:16px;color:var(--${overall === 'ok' ? 'green' : overall === 'warn' ? 'gold' : 'red'})">
+            ${overall === 'ok' ? '✓ All Systems Operational' : overall === 'warn' ? '⚠ Partially Ready' : '✗ Setup Required'}
+          </strong>
+          <span style="font-size:10px;color:var(--muted)">${new Date().toLocaleTimeString()}</span>
+        </div>
+        <div class="status-row">
+          <div class="dot ${adkOk ? 'ok' : 'err'}"></div>
+          <span class="label">AI Engine (Google ADK)</span>
+          <span class="value ${adkOk ? 'ok-text' : 'err-text'}">${adkOk ? 'Running' : 'Not Available'}</span>
+        </div>
+        <div class="status-row">
+          <div class="dot ${apiOk ? 'ok' : 'warn'}"></div>
+          <span class="label">Google API Key</span>
+          <span class="value ${apiOk ? 'ok-text' : 'warn-text'}">${apiOk ? 'Configured' : 'Not Set'}</span>
+        </div>
+        <div class="status-row">
+          <div class="dot ok"></div>
+          <span class="label">Server</span>
+          <span class="value ok-text">Running</span>
+        </div>
+        <div class="status-row">
+          <div class="dot ok"></div>
+          <span class="label">Model</span>
+          <span class="value">${h.model || 'gemini-2.0-flash'}</span>
+        </div>
+        <div class="status-row">
+          <div class="dot ok"></div>
+          <span class="label">Active Cases</span>
+          <span class="value">${h.active_cases || 0}</span>
+        </div>
+        ${h.startup_errors?.length ? `
+        <div style="margin-top:12px;padding:10px;background:rgba(232,93,93,0.08);border-radius:6px;border:1px solid rgba(232,93,93,0.2)">
+          <strong style="color:var(--red);font-size:11px">Startup Errors:</strong>
+          ${h.startup_errors.map(e => `<div style="color:var(--red);font-size:11px;margin-top:4px">• ${e}</div>`).join('')}
+        </div>` : ''}
+      </div>
+    `;
+
+    // Cases
+    const casesHtml = Array.isArray(cases) && cases.length ? cases.map(c => `
+      <div class="card" style="cursor:pointer" onclick="window.location='/'">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${c.title || 'Untitled Case'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">
+              ${Object.values(c.parties || {}).map(p => p.display_name).join(' vs ')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(42,191,172,0.1);
+              color:var(--accent);font-weight:600">${(c.phase || '').replace(/_/g,' ')}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">
+              Health: ${c.graph_health?.score || 0}%</div>
+          </div>
+        </div>
+      </div>
+    `).join('') : '<div class="card" style="font-size:12px;color:var(--muted)">No active cases. Start a new mediation from the main app.</div>';
+    document.getElementById('cases-panel').innerHTML = casesHtml;
+
+  } catch (e) {
+    document.getElementById('status-overview').innerHTML = `
+      <div class="card" style="border-left:4px solid var(--red)">
+        <strong style="color:var(--red)">✗ Server Unreachable</strong>
+        <p style="font-size:12px;color:var(--text2);margin-top:8px">
+          Error: ${e.message}<br><br>
+          Make sure the backend is running:<br>
+          <code style="color:var(--accent)">cd concordia && docker build -t concordia . && docker run -p 8080:8080 concordia</code>
+        </p>
+      </div>`;
+    document.getElementById('cases-panel').innerHTML =
+      '<div class="card" style="font-size:12px;color:var(--red)">Cannot load cases — server unreachable.</div>';
+  }
+}
+
+async function applyKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { showResult('Please enter an API key.', false); return; }
+  showResult('Applying key...', null);
+  try {
+    const r = await fetch('/api/set-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const d = await r.json();
+    if (d.adk_available) {
+      showResult('AI engine started successfully! Refreshing status...', true);
+      setTimeout(loadStatus, 1500);
+    } else if (d.errors?.length) {
+      showResult('Key applied but errors remain:\n' + d.errors.join('\n'), false);
+    } else {
+      showResult('Key applied. ' + (d.message || 'Check diagnostics for AI engine status.'), null);
+    }
+  } catch (e) {
+    showResult('Network error: ' + e.message, false);
+  }
+}
+
+function showResult(msg, ok) {
+  const el = document.getElementById('result');
+  el.style.display = 'block';
+  el.style.color = ok === true ? 'var(--green)' : ok === false ? 'var(--red)' : 'var(--gold)';
+  el.textContent = msg;
+}
+
+async function testCreateCase() {
+  const el = document.getElementById('test-case-result');
+  el.textContent = 'Creating test case...';
+  try {
+    const r = await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Test Case', parties: ['Party A', 'Party B'] })
+    });
+    const d = await r.json();
+    if (d.case_id) {
+      el.style.color = 'var(--green)';
+      el.textContent = `✓ Case created: ${d.case_id}\nParties: ${d.parties.map(p=>p.name).join(', ')}`;
+      setTimeout(loadStatus, 500);
+    } else {
+      el.style.color = 'var(--red)';
+      el.textContent = '✗ Failed: ' + JSON.stringify(d);
+    }
+  } catch (e) {
+    el.style.color = 'var(--red)';
+    el.textContent = '✗ Error: ' + e.message;
+  }
+}
+
+async function loadFullDiag() {
+  const el = document.getElementById('diag-result');
+  el.innerHTML = '<span style="color:var(--muted)">Loading...</span>';
+  try {
+    const d = await fetch('/api/diagnostics').then(r => r.json());
+    el.innerHTML = `<pre>${JSON.stringify(d, null, 2)}</pre>`;
+  } catch (e) {
+    el.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+}
+
+// Load on startup
+loadStatus();
+</script>
+</body>
+</html>

@@ -225,8 +225,10 @@ const init = {
   messages: {}, graphData: null, healthData: null, partyHealth: {},
   selectedNode: null, apiKeySet: false, cases: [],
   phaseOverlay: null, filterType: null,
-  diagnostics: { server: "checking", gemini: "unknown", ws: "disconnected", errors: [] },
+  diagnostics: { server: "checking", gemini: "unknown", ws: "disconnected", errors: [],
+    adkAvailable: null, startupErrors: [], model: "" },
   showHelp: false,
+  showDiagnostics: false,
 };
 
 function reducer(s, a) {
@@ -253,6 +255,7 @@ function reducer(s, a) {
     case "DIAG": return { ...s, diagnostics: { ...s.diagnostics, ...a.v } };
     case "DIAG_ERROR": return { ...s, diagnostics: { ...s.diagnostics, errors: [...s.diagnostics.errors.slice(-4), a.v] } };
     case "TOGGLE_HELP": return { ...s, showHelp: !s.showHelp };
+    case "TOGGLE_DIAGNOSTICS": return { ...s, showDiagnostics: !s.showDiagnostics };
     default: return s;
   }
 }
@@ -297,29 +300,39 @@ const SH = { fontSize: 10, fontWeight: 600, letterSpacing: 1.5, color: "#5a6577"
   textTransform: "uppercase", marginBottom: 10 };
 
 /* ── Diagnostics Panel ──────────────────────────────────────────── */
-function DiagnosticsBar({ diag }) {
-  if (diag.server === "ok" && diag.gemini !== "no_api_key") return null;
-  if (diag.server === "checking") return (
-    <div className="diag-banner info">
-      <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#x21BB;</span>
-      Checking server connection...
+function DiagnosticsBar({ diag, dispatch }) {
+  const banners = [];
+  if (diag.server === "checking") {
+    banners.push({ cls: "info", msg: "Checking server connection...", spin: true });
+  } else if (diag.server === "down") {
+    banners.push({ cls: "error", msg: "Server unreachable. Make sure the backend is running." });
+  } else if (diag.adkAvailable === false) {
+    const errDetail = diag.startupErrors?.length
+      ? diag.startupErrors[0]
+      : "Google ADK not initialized";
+    banners.push({
+      cls: "warn",
+      msg: `AI engine unavailable: ${errDetail}. Set your Gemini API key to enable AI features.`,
+    });
+  } else if (diag.gemini === "no_api_key") {
+    banners.push({
+      cls: "warn",
+      msg: "No Gemini API key configured. Enter your key above to enable AI features.",
+    });
+  }
+
+  if (banners.length === 0) return null;
+  return (
+    <div>
+      {banners.map((b, i) => (
+        <div key={i} className={`diag-banner ${b.cls}`} style={{ cursor: "pointer" }}
+          onClick={() => dispatch && dispatch({ type: "TOGGLE_DIAGNOSTICS" })}>
+          {b.spin && <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#x21BB;</span>}
+          {b.msg}&nbsp;<span style={{ opacity: 0.6, fontSize: 10 }}>(click for diagnostics)</span>
+        </div>
+      ))}
     </div>
   );
-  if (diag.server === "down") return (
-    <div className="diag-banner error">
-      <strong>Server unreachable.</strong>&nbsp;
-      Make sure the backend is running: <code>cd concordia/app && uvicorn main:app --port 8080</code>
-    </div>
-  );
-  if (diag.gemini === "no_api_key") return (
-    <div className="diag-banner warn">
-      <strong>No Gemini API key configured.</strong>&nbsp;
-      Enter your key above or set <code>GOOGLE_API_KEY</code> in <code>app/.env</code>.
-      Get one at <a href="https://aistudio.google.com/apikey" target="_blank"
-        style={{ color: "var(--accent)" }}>aistudio.google.com/apikey</a>
-    </div>
-  );
-  return null;
 }
 
 /* ── Help Modal ─────────────────────────────────────────────────── */
@@ -401,6 +414,47 @@ function HelpModal({ onClose }) {
           <button className="btn btn-primary btn-sm" onClick={onClose}>Got it</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── API Key Inline (used inside status alert) ──────────────────── */
+function ApiKeyInlineBar({ dispatch }) {
+  const [key, setKey] = useState("");
+  const [status, setStatus] = useState("");
+  const submit = async () => {
+    if (!key.trim()) return;
+    setStatus("Applying...");
+    try {
+      const r = await fetch("/api/set-key", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: key.trim() }) });
+      const d = await r.json();
+      if (d.adk_available) {
+        setStatus("AI engine started! Reloading page...");
+        dispatch({ type: "DIAG", v: { adkAvailable: true, gemini: "configured" } });
+        dispatch({ type: "API_KEY_SET" });
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        setStatus(d.errors?.length ? `Errors: ${d.errors.join("; ")}` : "Key applied. Check diagnostics for details.");
+        dispatch({ type: "API_KEY_SET" });
+        dispatch({ type: "DIAG", v: { gemini: "configured" } });
+      }
+    } catch { setStatus("Network error — check server logs."); }
+  };
+  return (
+    <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input type="password" value={key} onChange={e => setKey(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && submit()}
+          placeholder="Paste Gemini API key (AIza...)"
+          style={{ flex: 1, background: "rgba(10,10,15,0.8)", border: "1px solid var(--border-light)",
+            color: "var(--text)", padding: "8px 12px", borderRadius: 6,
+            fontFamily: "var(--font)", fontSize: 12, outline: "none" }} />
+        <button className="btn btn-primary btn-sm" onClick={submit}>Apply</button>
+      </div>
+      {status && <div style={{ fontSize: 11, color: status.includes("error") || status.includes("Errors")
+        ? "var(--red)" : "var(--green)" }}>{status}</div>}
     </div>
   );
 }
@@ -550,14 +604,148 @@ function UploadModal({ onClose, caseId, partyId, partyName, onDone }) {
   );
 }
 
+/* ── Diagnostics Modal ──────────────────────────────────────────── */
+function DiagnosticsModal({ onClose }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [keyInput, setKeyInput] = useState("");
+  const [keyResult, setKeyResult] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/diagnostics").then(r => r.json()).then(d => { setData(d); setLoading(false); })
+      .catch(e => { setData({ error: String(e) }); setLoading(false); });
+  }, []);
+
+  const applyKey = async () => {
+    if (!keyInput.trim()) return;
+    const r = await fetch("/api/set-key", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: keyInput.trim() }) });
+    const d = await r.json();
+    setKeyResult(d);
+    if (d.adk_available) setTimeout(() => location.reload(), 1200);
+  };
+
+  const statusColor = (s) => s === "ok" ? "var(--green)" : s === "missing" ? "var(--red)" : "var(--gold)";
+  const statusIcon = (s) => s === "ok" ? "✓" : s === "missing" ? "✗" : "!";
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 640 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h2 style={{ margin: 0 }}>System Diagnostics</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕ Close</button>
+        </div>
+
+        {loading && <div style={{ color: "var(--muted)", fontSize: 13 }}>Loading diagnostics...</div>}
+        {data?.error && <div style={{ color: "var(--red)", fontSize: 12 }}>Error: {data.error}</div>}
+
+        {data && !data.error && (
+          <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+            {/* ADK Status */}
+            <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 12,
+              background: data.adk_available ? "rgba(107,191,138,0.1)" : "rgba(232,93,93,0.1)",
+              border: `1px solid ${data.adk_available ? "rgba(107,191,138,0.3)" : "rgba(232,93,93,0.3)"}` }}>
+              <div style={{ fontWeight: 700, color: data.adk_available ? "var(--green)" : "var(--red)", marginBottom: 4 }}>
+                {data.adk_available ? "✓ AI Engine: Running" : "✗ AI Engine: Not Available"}
+              </div>
+              {!data.adk_available && data.startup_errors?.length > 0 && (
+                <div style={{ color: "var(--text2)", fontSize: 11 }}>
+                  {data.startup_errors.map((e, i) => <div key={i} style={{ color: "var(--red)" }}>• {e}</div>)}
+                </div>
+              )}
+            </div>
+
+            {/* Environment */}
+            <h3 style={{ ...SH, marginBottom: 8 }}>Environment</h3>
+            <div style={{ background: "var(--bg)", borderRadius: 6, padding: 10, marginBottom: 12 }}>
+              {Object.entries(data.environment || {}).map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0",
+                  borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ color: "var(--text2)" }}>{k}</span>
+                  <span style={{ color: k === "GOOGLE_API_KEY" && v === "MISSING" ? "var(--red)" :
+                    k === "GOOGLE_API_KEY" ? "var(--green)" : "var(--text)" }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Components */}
+            <h3 style={{ ...SH, marginBottom: 8 }}>Components</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 12 }}>
+              {Object.entries(data.components || {}).map(([k, v]) => (
+                <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px",
+                  background: "var(--bg)", borderRadius: 4 }}>
+                  <span style={{ color: statusColor(v.status), fontWeight: 700 }}>{statusIcon(v.status)}</span>
+                  <span style={{ flex: 1, color: "var(--text2)", fontSize: 11 }}>{k}</span>
+                  {v.version && <span style={{ color: "var(--muted)", fontSize: 10 }}>{v.version}</span>}
+                  {v.error && <span style={{ color: "var(--red)", fontSize: 10 }} title={v.error}>err</span>}
+                </div>
+              ))}
+            </div>
+
+            {/* Active cases */}
+            <div style={{ fontSize: 11, color: "var(--text2)", marginBottom: 12 }}>
+              Active mediation cases: <strong style={{ color: "var(--text)" }}>{data.active_cases}</strong>
+              &nbsp;|&nbsp;Python: <strong style={{ color: "var(--text)" }}>{data.python_version?.split(" ")[0]}</strong>
+            </div>
+
+            {/* Fix: Set API Key */}
+            {!data.adk_available && (
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                <h3 style={{ ...SH, marginBottom: 8 }}>Fix: Set Google API Key</h3>
+                <p style={{ color: "var(--text2)", fontSize: 11, marginBottom: 10, lineHeight: 1.5 }}>
+                  Get a free key at{" "}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" style={{ color: "var(--accent)" }}>
+                    aistudio.google.com/apikey
+                  </a>
+                  {" "}then paste it below.
+                </p>
+                <input type="password" className="modal-input" value={keyInput}
+                  onChange={e => setKeyInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && applyKey()}
+                  placeholder="AIza..." />
+                <button className="btn btn-primary" onClick={applyKey} style={{ width: "100%", marginTop: 8 }}>
+                  Apply Key & Restart AI Engine
+                </button>
+                {keyResult && (
+                  <div style={{ marginTop: 8, padding: 10, background: "var(--bg)", borderRadius: 6,
+                    color: keyResult.adk_available ? "var(--green)" : "var(--gold)", fontSize: 11 }}>
+                    {keyResult.adk_available
+                      ? "AI engine started! Reloading..."
+                      : `Key applied but ADK still failed: ${keyResult.errors?.join("; ") || "unknown error"}`}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Links */}
+            <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+              <a href="/api/health" target="_blank" style={{ color: "var(--accent)", fontSize: 11 }}>Health JSON</a>
+              <a href="/api/diagnostics" target="_blank" style={{ color: "var(--accent)", fontSize: 11 }}>Full Diagnostics JSON</a>
+              <a href="/api/cases" target="_blank" style={{ color: "var(--accent)", fontSize: 11 }}>Active Cases JSON</a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── Landing Page ───────────────────────────────────────────────── */
 function LandingPage({ state, dispatch }) {
   const [showCreate, setShowCreate] = useState(false);
+  const diag = state.diagnostics;
 
   useEffect(() => {
     // Check server health + load cases
     fetch("/api/health").then(r => r.json()).then(d => {
-      dispatch({ type: "DIAG", v: { server: "ok", gemini: d.gemini_api } });
+      dispatch({ type: "DIAG", v: {
+        server: "ok",
+        gemini: d.gemini_api,
+        adkAvailable: d.adk_available,
+        startupErrors: d.startup_errors || [],
+        model: d.model || "",
+      } });
     }).catch(() => dispatch({ type: "DIAG", v: { server: "down" } }));
 
     fetch("/api/cases").then(r => r.json()).then(d => {
@@ -578,28 +766,74 @@ function LandingPage({ state, dispatch }) {
     catch {}
   };
 
+  const adkOk = diag.adkAvailable !== false;
+  const apiKeyMissing = diag.gemini === "no_api_key";
+  const serverDown = diag.server === "down";
+
   return (
     <div className="landing-bg" style={{ flex: 1, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", position: "relative" }}>
-      <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 48 }}>
+      alignItems: "center", justifyContent: "center", position: "relative", overflowY: "auto" }}>
+      <div style={{ textAlign: "center", animation: "fadeInUp 0.8s ease", marginBottom: 32 }}>
         <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 6, color: "var(--accent)",
           marginBottom: 12, textShadow: "0 0 30px rgba(42,191,172,0.2)" }}>CONCORDIA</h1>
         <p style={{ fontSize: 13, color: "var(--text2)", maxWidth: 460, lineHeight: 1.6, margin: "0 auto" }}>
-          When the picture is complete, the mediator becomes a bridge-builder.</p>
-        <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
           AI-powered conflict mediation with live knowledge graph</p>
+        {diag.model && <p style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
+          Model: {diag.model}</p>}
       </div>
+
+      {/* System status alert — shown if not ready */}
+      {(serverDown || !adkOk || apiKeyMissing) && (
+        <div style={{ width: "100%", maxWidth: 560, padding: "0 20px", marginBottom: 24, animation: "fadeInUp 0.9s ease" }}>
+          <div style={{ padding: "16px 20px", background: "rgba(232,93,93,0.08)",
+            border: "1px solid rgba(232,93,93,0.25)", borderRadius: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ color: "var(--red)", fontWeight: 700, fontSize: 13 }}>
+                {serverDown ? "Cannot reach server" : !adkOk ? "AI engine not ready" : "API key required"}
+              </span>
+              <button className="btn btn-ghost btn-sm"
+                onClick={() => dispatch({ type: "TOGGLE_DIAGNOSTICS" })}>
+                View Diagnostics
+              </button>
+            </div>
+            {!adkOk && diag.startupErrors?.length > 0 && (
+              <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.6 }}>
+                {diag.startupErrors.slice(0, 3).map((e, i) =>
+                  <div key={i} style={{ color: "var(--red)" }}>• {e}</div>)}
+              </div>
+            )}
+            {(apiKeyMissing || !adkOk) && (
+              <div style={{ marginTop: 12 }}>
+                <p style={{ fontSize: 11, color: "var(--text2)", marginBottom: 8, lineHeight: 1.5 }}>
+                  Set your{" "}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" style={{ color: "var(--accent)" }}>
+                    Google AI Studio API key
+                  </a>
+                  {" "}to enable AI mediation:
+                </p>
+                <ApiKeyInlineBar dispatch={dispatch} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 16, animation: "fadeInUp 1s ease" }}>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}
-          style={{ padding: "14px 32px", fontSize: 14 }}>Start New Mediation</button>
+          style={{ padding: "14px 32px", fontSize: 14 }}>
+          Start New Mediation
+        </button>
         <button className="btn btn-secondary" onClick={() => dispatch({ type: "TOGGLE_HELP" })}
           style={{ padding: "14px 24px", fontSize: 13 }}>How It Works</button>
+        <button className="btn btn-ghost" onClick={() => dispatch({ type: "TOGGLE_DIAGNOSTICS" })}
+          style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)" }}>
+          {adkOk ? "✓ System OK" : "⚠ Diagnostics"}
+        </button>
       </div>
 
       {/* Active cases */}
       {state.cases.length > 0 && (
-        <div style={{ marginTop: 40, animation: "fadeInUp 1.2s ease", width: "100%", maxWidth: 560, padding: "0 20px" }}>
+        <div style={{ marginTop: 32, animation: "fadeInUp 1.2s ease", width: "100%", maxWidth: 560, padding: "0 20px" }}>
           <h3 style={{ ...SH, marginBottom: 12 }}>Active Cases</h3>
           {state.cases.map(c => (
             <div key={c.case_id} onClick={() => resume(c.case_id)}
@@ -628,6 +862,7 @@ function LandingPage({ state, dispatch }) {
       </div>
 
       {showCreate && <CreateCaseModal onClose={() => setShowCreate(false)} onCreated={onCreated} />}
+      {state.showDiagnostics && <DiagnosticsModal onClose={() => dispatch({ type: "TOGGLE_DIAGNOSTICS" })} />}
     </div>
   );
 }
@@ -1285,9 +1520,10 @@ function App() {
   return (
     <div style={{ height:"100vh", display:"flex", flexDirection:"column" }}>
       <ApiKeyBar dispatch={dispatch} />
-      <DiagnosticsBar diag={state.diagnostics} />
+      <DiagnosticsBar diag={state.diagnostics} dispatch={dispatch} />
       {state.view === "landing" ? <LandingPage state={state} dispatch={dispatch} /> :
         <Dashboard state={state} dispatch={dispatch} />}
+      {state.showDiagnostics && <DiagnosticsModal onClose={() => dispatch({ type: "TOGGLE_DIAGNOSTICS" })} />}
       {state.phaseOverlay && (
         <div className="phase-overlay">
           <div className="phase-overlay-text">
